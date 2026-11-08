@@ -1,0 +1,388 @@
+"""GalbotRobot native-object adapter and JSON normalization."""
+import math
+import time
+from typing import Any
+
+import numpy as np
+
+from ...geometry.point_cloud import decode_xyz, transform_crop_and_sample
+from ...geometry.transforms import compose_poses, pose_array
+
+
+class PythonRobotAdapter:
+    CAMERA_SOURCES = {
+        "left_rgb": ("rgb", "LEFT_ARM_CAMERA"),
+        "left_depth": ("depth", "LEFT_ARM_DEPTH_CAMERA"),
+        "right_rgb": ("rgb", "RIGHT_ARM_CAMERA"),
+        "right_depth": ("depth", "RIGHT_ARM_DEPTH_CAMERA"),
+        # G1 exposes the head wide-angle camera under HEAD_LEFT_CAMERA.
+        "head_fisheye": ("rgb", "HEAD_LEFT_CAMERA"),
+        "head_right": ("rgb", "HEAD_RIGHT_CAMERA"),
+        "surround_front_left": ("rgb", "LEFT_FRONT_SURROUND_CAMERA"),
+        "surround_front_right": ("rgb", "RIGHT_FRONT_SURROUND_CAMERA"),
+        "surround_rear_left": ("rgb", "LEFT_REAR_SURROUND_CAMERA"),
+        "surround_rear_right": ("rgb", "RIGHT_REAR_SURROUND_CAMERA"),
+    }
+    def __init__(self, platform: Any) -> None:
+        self._platform = platform
+        self._twist_controller_active = False
+
+    def capabilities(self) -> list[str]:
+        return ["joint_states", "lidar", "controller_snapshot", "switch_controller", "base_velocity", "imu", "camera_frames", "emergency_stop", "resume_emergency_stop"]
+
+    def camera_frame(self, source: str, last_timestamp_ns: int | None = None, preview_depth: bool = True) -> dict[str, Any]:
+        """Read one requested camera frame for the binary HTTP transport."""
+        config = self.CAMERA_SOURCES.get(source)
+        if config is None:
+            raise ValueError(f"unknown camera source: {source}")
+        robot, sdk = self._platform.require_robot()
+        kind, sensor_name = config
+        sensor_type = getattr(sdk, "SensorType", None)
+        sensor = getattr(sensor_type, sensor_name, None) if sensor_type is not None else None
+        if sensor is None:
+            raise ValueError(f"camera source is not supported by this robot: {source}")
+        try:
+            if kind == "rgb":
+                output_format = getattr(getattr(sdk, "RgbOutputFormat", None), "JPEG", None)
+                if output_format is None:
+                    raise RuntimeError("SDK does not provide RgbOutputFormat.JPEG")
+                frame = robot.get_rgb_data(sensor, output_format, True)
+            else:
+                frame = robot.get_depth_data(sensor)
+        except Exception as error:
+            raise RuntimeError(f"failed to read {source}: {error}") from error
+        if not isinstance(frame, dict):
+            raise RuntimeError(f"{source} returned no frame")
+        header = frame.get("header") if isinstance(frame.get("header"), dict) else {}
+        timestamp_ns = self._frame_int(frame, "timestamp_ns") or self._frame_int(header, "timestamp_ns")
+        # A depth frame needs CPU-heavy normalization before it can be sent to
+        # the browser. Check freshness first so repeated SDK frames incur none
+        # of the gateway's payload conversion or WebSocket work.
+        if last_timestamp_ns is not None and timestamp_ns == last_timestamp_ns:
+            return {"source": source, "timestamp_ns": timestamp_ns, "unchanged": True}
+        raw = self._frame_bytes(frame.get("data"))
+        if not raw:
+            raise RuntimeError(f"{source} returned an empty frame")
+        result: dict[str, Any] = {
+            "source": source,
+            "kind": kind,
+            "data": raw,
+            "width": self._frame_int(frame, "width"),
+            "height": self._frame_int(frame, "height"),
+            "timestamp_ns": timestamp_ns,
+        }
+        if kind == "rgb":
+            result["mime_type"] = "image/jpeg"
+        elif preview_depth:
+            result["data"], low, high = self._depth_preview(raw, result["width"], result["height"])
+            result["encoding"] = "depth_u8"
+            result["format"] = str(frame.get("format") or "16UC1")
+            scale = frame.get("depth_scale", 1000.0)
+            try:
+                result["depth_scale"] = float(scale)
+            except (TypeError, ValueError):
+                result["depth_scale"] = 1000.0
+            result["depth_low"] = low
+            result["depth_high"] = high
+        else:
+            result["encoding"] = str(frame.get("format") or "16UC1")
+            scale = frame.get("depth_scale", 1000.0)
+            result["depth_scale"] = float(scale) if scale is not None else 1000.0
+        return result
+
+    @staticmethod
+    def _depth_preview(raw: bytes, width: int, height: int) -> tuple[bytes, int, int]:
+        """Quantize 16-bit depth to one display byte/pixel using vectorized NumPy.
+
+        The web console only visualizes depth, so sending an 8-bit normalized
+        field halves the wire payload versus 16UC1 without losing display range.
+        """
+        expected = width * height
+        if width < 1 or height < 1 or len(raw) < expected * 2:
+            raise RuntimeError("depth frame dimensions or payload are invalid")
+        depth = np.frombuffer(raw, dtype="<u2", count=expected)
+        valid = depth[depth > 0]
+        if valid.size == 0:
+            raise RuntimeError("depth frame contains no valid pixels")
+        low, high = np.percentile(valid, (2, 98)).astype(np.uint16)
+        span = max(1, int(high) - int(low))
+        normalized = np.clip((depth.astype(np.int32) - int(low)) * 255 // span, 0, 255).astype(np.uint8)
+        normalized[depth == 0] = 0
+        return normalized.tobytes(), int(low), int(high)
+
+    @staticmethod
+    def _frame_bytes(data: Any) -> bytes:
+        if data is None:
+            return b""
+        try:
+            return bytes(data)
+        except (TypeError, ValueError):
+            return b""
+
+    @staticmethod
+    def _frame_int(data: dict[str, Any], key: str) -> int:
+        try:
+            return int(data.get(key, 0) or 0)
+        except (TypeError, ValueError):
+            return 0
+
+    def snapshot(self, include_lidar: bool = False, lidar_options: dict[str, Any] | None = None, include_sensors: bool = False, include_joints: bool = True) -> dict[str, Any]:
+        robot = self._platform.robot_instance
+        sdk = self._platform.sdk_module
+        if robot is None or sdk is None:
+            return {"joint_state": None, "lidar": None, "sensors": None}
+        joints = [
+            {
+                "name": str(state.joint_name),
+                "position": float(state.position),
+                "velocity": float(state.velocity),
+                "effort": float(state.effort),
+                "timestamp_ns": int(state.timestamp_ns),
+            }
+            for state in (robot.get_joint_states([], []) or [])
+        ] if include_joints else None
+        lidar = None
+        sensor_type = getattr(sdk, "SensorType", None)
+        if include_lidar and sensor_type is not None:
+            cloud = robot.get_lidar_data(sensor_type.BASE_LIDAR)
+            if cloud:
+                options = dict(lidar_options or {})
+                map_pose = options.pop("center", None)
+                transform, transform_error, tf_timestamp_ns = self._cloud_pose_in_map(robot, cloud, map_pose)
+                lidar = self._point_cloud_xyz(
+                    cloud,
+                    center=map_pose,
+                    transform=transform,
+                    transform_error=transform_error,
+                    tf_timestamp_ns=tf_timestamp_ns,
+                    **options,
+                )
+        return {"joint_state": joints, "lidar": lidar, "sensors": self._sensor_telemetry(robot, sdk) if include_sensors else None}
+
+    def set_joint_positions(self, positions: list[float], joint_names: list[str], max_speed: float, timeout: float) -> Any:
+        if not positions or len(positions) != len(joint_names): raise ValueError("joint names and positions must have the same non-zero length")
+        robot, _ = self._platform.require_robot()
+        return robot.set_joint_positions(positions, [], joint_names, True, float(max_speed), float(timeout))
+
+    def set_gripper_command(self, side: str, width: float, speed: float, effort: float) -> Any:
+        robot, sdk = self._platform.require_robot()
+        groups = getattr(sdk, f"{self._platform.model.upper()}JointGroup", None)
+        group = getattr(groups, f"{side}_gripper", None) if groups else None
+        if group is None: raise ValueError(f"{side} gripper is not supported")
+        return robot.set_gripper_command(group, float(width), float(speed), float(effort), True)
+
+    @staticmethod
+    def _sensor_telemetry(robot: Any, sdk: Any) -> dict[str, Any]:
+        """Read compact sensor telemetry without letting an unavailable sensor fail the snapshot."""
+        telemetry: dict[str, Any] = {"imu": None, "bms": None, "grippers": {}}
+        try:
+            bms = robot.get_bms_information()
+            if bms: telemetry["bms"] = dict(bms)
+        except Exception: pass
+        group_enum = getattr(sdk, "G1JointGroup", None) or getattr(sdk, "S1JointGroup", None) or getattr(sdk, "G3JointGroup", None)
+        if group_enum is not None:
+            for side in ("left", "right"):
+                group = getattr(group_enum, f"{side}_gripper", None)
+                if group is None: continue
+                try:
+                    state = robot.get_gripper_state(group)
+                    if state: telemetry["grippers"][side] = {key: getattr(state, key, None) for key in ("width", "velocity", "effort", "is_moving", "timestamp_ns")}
+                except Exception: continue
+        sensor_type = getattr(sdk, "SensorType", None)
+        if sensor_type is not None:
+            for name in ("CHASSIS_IMU", "TORSO_IMU"):
+                sensor = getattr(sensor_type, name, None)
+                if sensor is None:
+                    continue
+                try:
+                    data = robot.get_imu_data(sensor)
+                    if data:
+                        telemetry["imu"] = {"source": name.lower(), **data}
+                        break
+                except Exception:
+                    continue
+        return telemetry
+
+    @classmethod
+    def _cloud_pose_in_map(
+        cls,
+        robot: Any,
+        cloud: dict[str, Any],
+        map_pose: dict[str, float] | None,
+    ) -> tuple[Any | None, str | None, int | None]:
+        header = cloud.get("header", {})
+        frame_id = str(header.get("frame_id", "")).lstrip("/") if isinstance(header, dict) else ""
+        frame_key = frame_id.lower()
+        if not frame_id:
+            return None, "雷达点云未提供 frame_id", None
+        if frame_key == "map":
+            return pose_array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]), None, None
+        if not map_pose or str(map_pose.get("frame_id", "map")).lstrip("/").lower() != "map":
+            return None, "当前没有 map 坐标系下的机器人位姿", None
+
+        map_from_base = pose_array(map_pose)
+        if map_from_base is None:
+            return None, "机器人 map 位姿格式无效", None
+        if frame_key == "base_link":
+            return map_from_base, None, None
+
+        timestamp_ns = 0
+        if isinstance(header, dict):
+            try:
+                timestamp_ns = int(header.get("timestamp_ns", 0) or 0)
+            except (TypeError, ValueError):
+                timestamp_ns = 0
+        try:
+            result = robot.get_transform(
+                "base_link",
+                frame_id,
+                timestamp_ns=timestamp_ns,
+                timeout_ms=100,
+            )
+        except Exception as error:
+            return None, f"get_transform(base_link, {frame_id}) 失败: {error}", None
+        if not result or len(result) < 2 or not result[0]:
+            return None, f"TF 树中没有 base_link <- {frame_id} 变换", None
+        base_from_source = pose_array(result[0])
+        if base_from_source is None:
+            return None, f"base_link <- {frame_id} 变换格式无效", None
+        try:
+            tf_timestamp_ns = int(result[1])
+        except (TypeError, ValueError):
+            tf_timestamp_ns = None
+        return compose_poses(map_from_base, base_from_source), None, tf_timestamp_ns
+
+    def left_wrist_shake(self, joint: str = "left_arm_joint7", amplitude: float = 0.08, frequency: float = 3.0, duration: float = 2.0) -> dict[str, Any]:
+        """Oscillate one left-arm wrist joint at high frequency (bell-shake)."""
+        robot, sdk = self._platform.require_robot()
+        names = list(robot.get_joint_names(only_active_joint=True, joint_groups=["left_arm"]) or [])
+        positions = list(robot.get_joint_positions(joint_groups=["left_arm"], joint_names=[]) or [])
+        if len(names) != 7 or len(positions) != 7:
+            raise RuntimeError(f"unexpected left_arm joints: names={len(names)} positions={len(positions)}")
+        if joint not in names:
+            raise ValueError(f"unknown left_arm joint: {joint}")
+        index = names.index(joint)
+        amplitude = max(0.0, min(0.2, float(amplitude)))
+        frequency = max(1.0, min(6.0, float(frequency)))
+        duration = max(0.5, min(5.0, float(duration)))
+        status_enum = getattr(sdk, "ControlStatus", None)
+        success = getattr(status_enum, "SUCCESS", None)
+        start = time.monotonic()
+        next_tick = start
+        frames = 0
+        while True:
+            elapsed = time.monotonic() - start
+            if elapsed >= duration:
+                break
+            target = list(positions)
+            target[index] = positions[index] + amplitude * math.sin(2.0 * math.pi * frequency * elapsed)
+            commands = []
+            for value in target:
+                command = sdk.JointCommand()
+                command.position = float(value)
+                commands.append(command)
+            result = robot.set_joint_commands(commands, ["left_arm"], [], 0.0)
+            if success is not None and result != success:
+                raise RuntimeError(f"set_joint_commands failed: {result}")
+            frames += 1
+            next_tick += 0.05
+            remaining = next_tick - time.monotonic()
+            if remaining > 0:
+                time.sleep(remaining)
+        restore = []
+        for value in positions:
+            command = sdk.JointCommand()
+            command.position = float(value)
+            restore.append(command)
+        robot.set_joint_commands(restore, ["left_arm"], [], 0.0)
+        robot.set_joint_positions(positions, [], names, True, 0.1, 10.0)
+        return {"ok": True, "joint": joint, "amplitude": amplitude, "frequency": frequency, "duration": duration, "frames": frames}
+
+    def controller_snapshot(self, group: str) -> dict[str, Any]:
+        robot, sdk = self._platform.require_robot()
+        group_enum = getattr(sdk, f"{self._platform.model.upper()}JointGroup", None)
+        member = getattr(group_enum, group, None) if group_enum else None
+        active = robot.get_active_controller(member) if member is not None else None
+        controller_enum = getattr(sdk, f"{self._platform.model.upper()}ControllerName")
+        available = sorted(name for name in dir(controller_enum) if name.isupper() and not name.startswith("_"))
+        return {"group": group, "active": getattr(active, "name", str(active)), "available": available}
+
+    def switch_controller(self, controller: str) -> Any:
+        robot, sdk = self._platform.require_robot()
+        enum = getattr(sdk, f"{self._platform.model.upper()}ControllerName")
+        value = getattr(enum, controller, None)
+        if value is None:
+            raise ValueError(f"unknown {self._platform.model} controller: {controller}")
+        result = robot.switch_controller(value)
+        self._twist_controller_active = str(controller).upper() == "CHASSIS_TWIST_CTRL"
+        return result
+
+    def set_base_velocity(self, linear, angular, duration):
+        robot, sdk = self._platform.require_robot()
+        controller_enum = getattr(sdk, f"{self._platform.model.upper()}ControllerName", None)
+        twist_controller = getattr(controller_enum, "CHASSIS_TWIST_CTRL", None) if controller_enum else None
+        if twist_controller is not None and not self._twist_controller_active:
+            result = robot.switch_controller(twist_controller)
+            status_enum = getattr(sdk, "ControlStatus", None)
+            success = getattr(status_enum, "SUCCESS", None)
+            if success is not None and result != success:
+                raise RuntimeError(f"switch_controller(CHASSIS_TWIST_CTRL) failed: {result}")
+            self._twist_controller_active = True
+        return robot.set_base_velocity(list(linear), list(angular), float(duration))
+
+    def emergency_stop(self):
+        robot, _ = self._platform.require_robot()
+        method = getattr(robot, "emergency_stop", None)
+        if method is not None:
+            return method()
+        return robot.stop_base()
+
+    def resume_from_emergency_stop(self):
+        robot, _ = self._platform.require_robot()
+        method = getattr(robot, "resume_from_emergency_stop", None)
+        if method is None:
+            raise RuntimeError("当前 SDK 不支持恢复急停")
+        return method()
+
+    def stop_controller(self, group: str):
+        robot, _ = self._platform.require_robot()
+        return robot.stop_controller(str(group))
+
+    @staticmethod
+    def _point_cloud_xyz(
+        cloud: dict[str, Any],
+        max_points: int = 8000,
+        crop: dict[str, float] | None = None,
+        center: dict[str, float] | None = None,
+        transform: Any | None = None,
+        transform_error: str | None = None,
+        tf_timestamp_ns: int | None = None,
+    ) -> dict[str, Any] | None:
+        decoded = decode_xyz(cloud)
+        if decoded is None:
+            return None
+        points, total = decoded
+        header = cloud.get("header", {})
+        frame_id = str(header.get("frame_id", "")) if isinstance(header, dict) else ""
+        source_frame_id = frame_id.lstrip("/")
+        transform = pose_array(transform) if transform is not None else None
+        coordinates_in_map = transform is not None
+        output, selected = transform_crop_and_sample(
+            points,
+            transform=transform,
+            crop=crop,
+            center=center if coordinates_in_map else None,
+            max_points=max_points,
+        )
+        return {
+            "points": [{"x": float(x), "y": float(y), "z": float(z)} for x, y, z in output],
+            "frame_id": "map" if coordinates_in_map else source_frame_id,
+            "source_frame_id": source_frame_id,
+            "source_pose_map": transform.tolist() if transform is not None else None,
+            "transform_applied": coordinates_in_map and source_frame_id.lower() != "map",
+            "transform_error": transform_error,
+            "tf_timestamp_ns": tf_timestamp_ns,
+            "source_point_count": total,
+            "selected_point_count": selected,
+            "truncated": len(output) < selected,
+        }

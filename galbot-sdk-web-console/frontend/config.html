@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Galbot 参数配置中心</title>
+  <link rel="stylesheet" href="/frontend/styles/config-reference.css">
+  <link rel="stylesheet" href="/frontend/styles/config-readonly.css">
+  <link rel="stylesheet" href="/frontend/styles/recording.css">
+  <link rel="stylesheet" href="/frontend/styles/auth.css">
+</head>
+<body>
+  <section id="authGate" class="auth-gate" hidden aria-labelledby="authTitle">
+    <form id="authForm" class="auth-card">
+      <div class="auth-brand"><span class="auth-mark">G</span><div><span>GALBOT</span><h1 id="authTitle">Galbot 网页控制台</h1></div></div>
+      <p>请输入本次服务启动时显示的访问码。</p>
+      <label for="authCode">访问码</label>
+      <input id="authCode" name="code" autocomplete="one-time-code" required autofocus>
+      <button id="authSubmit" class="auth-submit" type="submit">建立连接 <span>→</span></button>
+      <p id="authError" class="auth-error" role="alert"></p>
+    </form>
+  </section>
+  <div id="consoleApp" class="app-shell" hidden>
+    <aside class="sidebar">
+      <div class="brand"><div class="brand-mark" aria-hidden="true"><span class="brand-orbit"></span><span class="brand-core"></span></div><div><strong>GALBOT</strong><span>Robot Console</span></div></div>
+      <div class="nav-label">设备管理</div>
+      <nav id="services" aria-label="配置服务"></nav>
+      <div class="sidebar-footer"><div class="connection-card"><div class="connection-head"><span id="connection-dot" class="status-dot"></span><strong id="connection-title">正在连接</strong></div><p id="mode">正在获取设备信息…</p></div><div class="version">Galbot SDK · Configuration</div></div>
+    </aside>
+    <main class="main">
+      <header class="topbar"><button id="menu" class="icon-button menu-button" aria-label="打开导航">☰</button><div class="crumb"><span data-i18n="设备管理">设备管理</span><b>/</b><strong data-i18n="参数配置">参数配置</strong></div><div class="top-status"><span class="status-dot"></span><span data-i18n="配置服务运行正常">配置服务运行正常</span><button id="language" class="button secondary">English</button></div></header>
+      <div class="workspace">
+        <section class="hero"><div><div class="section-kicker"><span></span> PERSISTED CONFIGURATION</div><h1 id="title">设备参数配置</h1><p id="subtitle">查看并管理机器人的持久化参数，修改将在相关服务重启后生效。</p></div><div class="hero-actions"><button id="refresh" class="button secondary"><span aria-hidden="true">↻</span> 重新读取</button><button id="restore-defaults" class="button secondary">恢复当前显示项</button><button id="restore-all" class="button secondary">恢复所有服务默认配置</button><button id="save" class="button primary" disabled><span aria-hidden="true">✓</span> 保存修改 <em id="count"></em></button></div></section>
+        <div id="notice"></div>
+        <section class="summary" aria-label="配置概览"><div class="summary-card blue"><div class="summary-icon">◫</div><div><span>配置参数</span><strong id="field-count">—</strong><small>当前服务公开字段</small></div></div><div class="summary-card violet"><div class="summary-icon">⌘</div><div><span>功能分组</span><strong id="group-count">—</strong><small>按控制模块组织</small></div></div><div class="summary-card amber"><div class="summary-icon">✎</div><div><span>待保存修改</span><strong id="change-count">0</strong><small id="change-caption">所有配置均已同步</small></div></div><div class="summary-card green"><div class="summary-icon">●</div><div><span>配置状态</span><strong class="summary-text">已同步</strong><small>持久化配置已读取</small></div></div></section>
+        <section class="configuration-panel"><div class="panel-toolbar"><div class="search-box"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="搜索参数名称、键名或说明…" autocomplete="off"><kbd>⌘ K</kbd></div><label class="changed-filter"><input id="only-changed" type="checkbox"><span></span> 仅显示待保存修改</label><label class="changed-filter"><input id="only-customized" type="checkbox"><span></span> 仅显示自定义配置</label><div class="result-count" id="result-count"></div></div><div class="panel-body"><aside class="group-nav"><div class="group-title">参数分组</div><div id="groups"></div><div class="group-help"><strong>配置提示</strong><p>参数保存后写入持久化配置，需重启相关服务后生效。</p></div></aside><section id="content" class="content" aria-live="polite"><div class="loading-state"><span class="loader"></span><strong>正在读取设备配置</strong><p>请稍候，正在获取持久化参数…</p></div></section></div></section>
+        <section class="sdk-log-panel"><div class="sdk-log-head"><div><div class="section-kicker"><span></span> SDK RUNTIME LOG</div><h2>SDK 运行日志</h2></div><button id="clear-logs" class="button secondary">清空显示</button></div><pre id="sdk-logs" class="sdk-logs" aria-live="polite">等待 SDK 日志…</pre></section>
+      </div>
+    </main>
+  </div>
+  <div id="mobile-overlay" class="mobile-overlay"></div><div id="toast" class="toast" role="status"></div>
+  <dialog id="confirm-dialog" class="confirm-dialog"><form method="dialog"><div class="dialog-icon">!</div><h2>确认保存配置？</h2><p>即将修改 <strong id="dialog-count">0</strong> 个参数。配置写入后通常需要重启相关服务或设备才能生效。</p><div id="change-preview" class="change-preview"></div><div class="dialog-actions"><button value="cancel" class="button secondary">返回检查</button><button id="confirm-save" value="default" class="button primary">确认保存</button></div></form></dialog>
+  <script src="/frontend/pages/console-bootstrap.js"></script>
+  <script src="/frontend/pages/config.js"></script>
+  <script type="module" src="/frontend/pages/recording-bar-bootstrap.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "model": "g1",
+  "collision_urdf": "collision/galbot_g1_sphere.urdf",
+  "visual_urdf": "visual/galbot_g1.urdf",
+  "package_roots": {
+    "galbot_g1_description": "visual"
+  },
+  "source": {
+    "repository": "https://github.com/GalaxyGeneralRobotics/galbot_one_golf_description.git",
+    "commit": "df3812722dfa784b8ba255087d15ed72afa3a747",
+    "license": "Apache-2.0"
+  },
+  "status": "visual_asset_snapshot"
+}

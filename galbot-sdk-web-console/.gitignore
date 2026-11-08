@@ -1,0 +1,37 @@
+# Python bytecode, test, type-checker, and coverage caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Virtual environments and build artifacts
+.venv/
+venv/
+ENV/
+build/
+dist/
+*.egg-info/
+
+# Local configuration, logs, and editor settings
+.env
+.env.*
+!.env.example
+*.log
+recordings/
+assets/robots/*/rerun/*.rrd
+.vscode/
+.idea/
+
+# Local dependency lock and reference material
+uv.lock
+refs/
+
+# Local environment and synchronization helpers
+env.sh
+rsync.cmd
+rsync.ps1
+rsync.sh

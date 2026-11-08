@@ -1,0 +1,15 @@
+.auth-gate { position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:24px;overflow:auto;background:radial-gradient(circle at 15% 10%,#20383e 0,transparent 35%),linear-gradient(135deg,#0d1218 0%,#17232b 52%,#10161d 100%);color:#eef4f7;font:14px/1.5 Inter,"PingFang SC","Microsoft YaHei",system-ui,sans-serif; }
+.auth-gate[hidden] { display:none!important; }
+.auth-card { box-sizing:border-box;width:min(460px,100%);display:grid;gap:16px;padding:38px;border:1px solid rgba(143,224,210,.25);border-radius:18px;background:rgba(27,39,47,.9);box-shadow:0 28px 80px rgba(0,0,0,.44),inset 0 1px 0 rgba(255,255,255,.06);backdrop-filter:blur(16px); }
+.auth-brand { display:flex;align-items:center;gap:14px; }
+.auth-mark { display:grid;width:42px;height:42px;place-items:center;border-radius:5px;color:#0c171b;background:#66d3c2;font-size:22px;font-weight:800; }
+.auth-brand h1 { margin:3px 0 0;font-size:23px;letter-spacing:-.3px; }
+.auth-brand div>span { color:#8fa5af;font-size:11px;font-weight:700;letter-spacing:1.4px; }
+.auth-card h1,.auth-card p { margin:0; }
+.auth-card input { box-sizing:border-box;width:100%;min-height:54px;padding:0 16px;border:1px solid #536571;border-radius:9px;color:#f4f8f9;background:rgba(9,15,20,.72);font:600 19px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:4px;text-align:center;text-transform:uppercase; }
+.auth-card input:focus { outline:2px solid #66d3c2;outline-offset:1px;border-color:#66d3c2; }
+.auth-submit { display:flex;align-items:center;justify-content:space-between;min-height:52px;padding:0 18px;border:0;border-radius:9px;color:#092025;background:linear-gradient(135deg,#8ae0d2,#58c8bc);font:inherit;font-weight:800;cursor:pointer;box-shadow:0 8px 20px rgba(88,200,188,.2); }
+.auth-submit:hover { background:#8ae0d2; }
+.auth-submit:disabled { opacity:.65;cursor:wait; }
+.auth-error { min-height:20px;color:#ff9696; }
+.app-shell[hidden] { display:none!important; }

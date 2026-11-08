@@ -1,0 +1,83 @@
+.readonly-array {
+  display: flex;
+  min-height: 36px;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  padding: 6px 8px;
+  border: 1px solid #dce2eb;
+  border-radius: 7px;
+  background: #f7f9fc;
+}
+
+.readonly-array code {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  padding: 3px 7px;
+  border-radius: 4px;
+  color: #61718b;
+  background: #e9eef6;
+  font: 12px/1.35 ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+/* Long read-only arrays (notably group_lists) need room to wrap and remain
+   legible. Show current/default values on separate full-width lines. */
+.array-meta {
+  height: auto;
+  min-height: 42px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
+  color: #66738a;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.array-meta .default-value {
+  order: 1;
+}
+
+.array-meta > span:first-of-type {
+  order: 2;
+}
+
+.array-meta .undo-field {
+  order: 3;
+  align-self: flex-end;
+}
+
+.readonly input {
+  color: #6d7787;
+  background: #f7f9fc;
+}
+
+/* Keep group titles visually anchored to the panel's left edge. */
+.config-group-head {
+  grid-template-columns: 26px 1fr 30px;
+  gap: 8px;
+  padding: 0 10px;
+}
+
+.group-number {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  font-size: 8px;
+}
+
+.sdk-log-panel > summary.sdk-log-title {
+  display: block;
+  padding: 0 22px 0 0;
+  cursor: pointer;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  list-style: none;
+}
+
+.sdk-log-panel > summary.sdk-log-title::-webkit-details-marker { display: none; }
+.sdk-log-panel > summary.sdk-log-title::after { content: '⌄'; float: right; color: #8fa1b8; }
+.sdk-log-panel:not([open]) > summary.sdk-log-title::after { transform: rotate(-90deg); }
+.sdk-log-panel:not([open]) .sdk-log-head, .sdk-log-panel:not([open]) .sdk-logs { display: none; }

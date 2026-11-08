@@ -1,0 +1,1034 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--This URDF file has been generated and calibrated, calibrated version: R001GBDDAAAE0003/
+--><robot name="" xmlns:xacro="http://ros.org/wiki/xacro">
+    <!-- xacro/v2_2 and xacro/v2_3 are symlink dirs for v2_2_0 / v2_3_0 assets. -->
+    <!-- arm_type: A22（长臂+D405相机）, B10（短臂+双GMSL相机） -->
+    <!-- body_type / torso: A（torso-A，方屏）, B（torso-B，圆屏） -->
+    <link name="base_link"/>
+    <joint name="omni_chassis_joint" type="fixed">
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <parent link="base_link"/>
+        <child link="omni_chassis_base_link"/>
+    </joint>
+    <link name="omni_chassis_base_link">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://galbot_g_series_description/meshes/v2_2_0/collision/original/leg/omni_chassis_base_link.stl"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="0.02079 0.00615 0.07261" rpy="0.0 0.0 0.0"/>
+            <mass value="31.1845"/>
+            <inertia ixx="331.7069394" ixy="0.03760583" ixz="0.03706221" iyy="320.81635568" iyz="0.01303674" izz="558.33152838"/>
+        </inertial>
+        <collision>
+            <origin xyz="0.0 -0.2 0.11" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.12"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.0 0.2 0.11" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.12"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.23 0.0 0.19" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.06"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.23 0.0 0.08" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.12"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="-0.219 0.0 0.11" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.12"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="-0.157 -0.157 0.11" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.124"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.157 0.157 0.11" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.123"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="-0.157 0.157 0.11" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.123"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.157 -0.157 0.11" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.123"/>
+            </geometry>
+        </collision>
+    </link>
+    <link name="omni_chassis_leg_mount_link">
+        <inertial>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <mass value="0.0"/>
+            <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
+        </inertial>
+    </link>
+    <joint name="omni_chassis_leg_mount_joint" type="fixed">
+        <origin xyz="0.134 0.0 0.1325" rpy="0.0 0.0 0.0"/>
+        <parent link="omni_chassis_base_link"/>
+        <child link="omni_chassis_leg_mount_link"/>
+    </joint>
+    <joint name="leg_base_joint" type="fixed">
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <parent link="omni_chassis_leg_mount_link"/>
+        <child link="leg_base_link"/>
+    </joint>
+    <link name="leg_base_link">
+        <inertial>
+            <origin xyz="7.000000e-05 -0.05414 0.0" rpy="0.0 0.0 0.0"/>
+            <mass value="1.58"/>
+            <inertia ixx="0.00797474" ixy="8.350000e-06" ixz="2.000000e-08" iyy="0.00248067" iyz="6.900000e-07" izz="0.00797203"/>
+        </inertial>
+    </link>
+    <link name="leg_link1">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://galbot_g_series_description/meshes/v2_2_0/collision/original/leg/leg_link1.stl"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="0.22308 6.500000e-04 -0.03018" rpy="0.0 0.0 0.0"/>
+            <mass value="17.206"/>
+            <inertia ixx="0.07124549" ixy="0.00349977" ixz="0.12482873" iyy="1.69951784" iyz="2.374900e-04" izz="1.67846222"/>
+        </inertial>
+        <collision>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.095"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.1 -0.03 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.095"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.22 -0.03 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.095"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.33 -0.03 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.095"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="leg_joint1" type="revolute">
+        <origin xyz="0.0 0.0 0.0" rpy="1.5707963267948966 -0.385 3.141592653589793"/>
+        <parent link="leg_base_link"/>
+        <child link="leg_link1"/>
+        <axis xyz="0.0 0.0 1.0"/>
+        <limit lower="0.0" upper="0.9374" effort="169.0" velocity="1.0"/>
+    </joint>
+    <link name="leg_link2">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://galbot_g_series_description/meshes/v2_2_0/collision/original/leg/leg_link2.stl"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="0.1798 1.700000e-04 0.04174" rpy="0.0 0.0 0.0"/>
+            <mass value="7.611"/>
+            <inertia ixx="0.08014216" ixy="1.496200e-04" ixz="0.05492423" iyy="0.49511503" iyz="1.025800e-04" izz="0.43725146"/>
+        </inertial>
+        <collision>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.085"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.0 0.0 0.06" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.085"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.0 0.0 -0.06" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.085"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.05 0.0 0.06" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.085"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.05 0.0 -0.06" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.085"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.1 0.0 0.06" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.085"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.1 0.0 -0.06" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.085"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.15 0.0 0.06" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.085"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.15 0.0 -0.06" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.085"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.2 0.0 0.06" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.085"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.2 0.0 -0.06" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.085"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.25 0.0 0.06" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.085"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.25 0.0 -0.06" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.085"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.3 0.0 0.06" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.085"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.3 0.0 -0.06" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.085"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.35 0.0 0.06" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.085"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.35 0.0 -0.06" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.085"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.4 0.0 0.06" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.085"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.4 0.0 -0.06" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.085"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.4 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.085"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="leg_joint2" type="revolute">
+        <origin xyz="0.45 0.0 0.0" rpy="3.141592653589793 0.0 2.7566"/>
+        <parent link="leg_link1"/>
+        <child link="leg_link2"/>
+        <axis xyz="0.0 0.0 1.0"/>
+        <limit lower="0.0" upper="2.5847" effort="169.0" velocity="1.0"/>
+    </joint>
+    <link name="leg_link3">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://galbot_g_series_description/meshes/v2_2_0/collision/original/leg/leg_link3.stl"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="1.000000e-04 0.00931 -0.02092" rpy="0.0 0.0 0.0"/>
+            <mass value="4.55"/>
+            <inertia ixx="0.01939794" ixy="1.798000e-05" ixz="2.812000e-05" iyy="0.01757571" iyz="1.732000e-05" izz="0.01384547"/>
+        </inertial>
+        <collision>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.1"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="leg_joint3" type="revolute">
+        <origin xyz="0.39 0.0 0.0" rpy="3.141592653589793 0.0 3.141592653589793"/>
+        <parent link="leg_link2"/>
+        <child link="leg_link3"/>
+        <axis xyz="0.0 0.0 1.0"/>
+        <limit lower="0.0" upper="2.3262" effort="84.0" velocity="1.0"/>
+    </joint>
+    <link name="leg_link4">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://galbot_g_series_description/meshes/v2_2_0/collision/original/leg/leg_link4.stl"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="8.000000e-05 -0.02006 -0.04905" rpy="0.0 0.0 0.0"/>
+            <mass value="4.944"/>
+            <inertia ixx="0.03451013" ixy="8.330000e-06" ixz="2.101000e-05" iyy="0.03294961" iyz="4.348900e-04" izz="0.01161759"/>
+        </inertial>
+        <collision>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.1"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="leg_joint4" type="revolute">
+        <origin xyz="0.0 0.224 0.0" rpy="-1.5707963267948966 -1.5707963267948966 0.0"/>
+        <parent link="leg_link3"/>
+        <child link="leg_link4"/>
+        <axis xyz="0.0 0.0 1.0"/>
+        <limit lower="-1.5906" upper="1.5906" effort="30.0" velocity="1.0"/>
+    </joint>
+    <link name="leg_link5">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://galbot_g_series_description/meshes/v2_2_0/collision/original/leg/leg_link5.stl"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="0.0 0.01247 0.0529" rpy="0.0 0.0 0.0"/>
+            <mass value="1.32"/>
+            <inertia ixx="0.0059985" ixy="0.0" ixz="0.0" iyy="0.0059157" iyz="2.935200e-04" izz="0.00345508"/>
+        </inertial>
+        <collision>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.1"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="leg_joint5" type="revolute">
+        <origin xyz="0.0 0.0 0.0" rpy="1.5707963267948966 0.0 0.0"/>
+        <parent link="leg_link4"/>
+        <child link="leg_link5"/>
+        <axis xyz="0.0 0.0 1.0"/>
+        <limit lower="-0.1645" upper="0.1645" effort="30.0" velocity="1.0"/>
+    </joint>
+    <link name="leg_end_effector_mount_link">
+        <inertial>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <mass value="0.0"/>
+            <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
+        </inertial>
+    </link>
+    <joint name="leg_end_effector_mount_joint" type="fixed">
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <parent link="leg_link5"/>
+        <child link="leg_end_effector_mount_link"/>
+    </joint>
+    <joint name="torso_base_joint" type="fixed">
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <parent link="leg_end_effector_mount_link"/>
+        <child link="torso_base_link"/>
+    </joint>
+    <link name="torso_base_link">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://galbot_g_series_description/meshes/v2_2_0/collision/original/torso/A/torso_base_link.stl"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="0.0053 0.1249 -8.800000e-04" rpy="0.0 0.0 0.0"/>
+            <mass value="7.08"/>
+            <inertia ixx="0.12762873" ixy="0.00338332" ixz="0.00152351" iyy="0.04560482" iyz="4.879000e-04" izz="0.13469248"/>
+        </inertial>
+        <collision>
+            <origin xyz="0.0 0.14 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.14"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.0 0.06 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.13"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.0 -0.02 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.11"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="-0.06 0.18 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.11"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.06 0.18 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.11"/>
+            </geometry>
+        </collision>
+    </link>
+    <link name="torso_head_mount_link">
+        <inertial>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <mass value="0.0"/>
+            <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
+        </inertial>
+    </link>
+    <joint name="torso_head_mount_joint" type="fixed">
+        <origin xyz="0.0 0.37711 0.0" rpy="-1.5707963267948966 -1.5707963267948966 0.0"/>
+        <parent link="torso_base_link"/>
+        <child link="torso_head_mount_link"/>
+    </joint>
+    <link name="torso_left_arm_mount_link">
+        <inertial>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <mass value="0.0"/>
+            <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
+        </inertial>
+    </link>
+    <joint name="torso_left_arm_mount_joint" type="fixed">
+        <origin xyz="0.20843 0.172 0.0" rpy="0.0 1.5707963267948966 0.0"/>
+        <parent link="torso_base_link"/>
+        <child link="torso_left_arm_mount_link"/>
+    </joint>
+    <link name="torso_right_arm_mount_link">
+        <inertial>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <mass value="0.0"/>
+            <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
+        </inertial>
+    </link>
+    <joint name="torso_right_arm_mount_joint" type="fixed">
+        <origin xyz="-0.20843 0.172 0.0" rpy="3.141592653589793 1.5707963267948966 0.0"/>
+        <parent link="torso_base_link"/>
+        <child link="torso_right_arm_mount_link"/>
+    </joint>
+    <joint name="head_base_joint" type="fixed">
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <parent link="torso_head_mount_link"/>
+        <child link="head_base_link"/>
+    </joint>
+    <link name="head_base_link">
+        <inertial>
+            <origin xyz="-1.900000e-04 1.200000e-04 -0.0832" rpy="0.0 0.0 0.0"/>
+            <mass value="0.4199"/>
+            <inertia ixx="0.00352162" ixy="1.600000e-07" ixz="6.770000e-06" iyy="0.00343251" iyz="2.910000e-06" izz="4.411500e-04"/>
+        </inertial>
+    </link>
+    <link name="head_link1">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://galbot_g_series_description/meshes/v2_2_0/collision/original/head/head_link1.stl"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="1.000000e-05 0.00189 -0.04337" rpy="0.0 0.0 0.0"/>
+            <mass value="1.5712"/>
+            <inertia ixx="6.9002956" ixy="0.00152205" ixz="0.00313295" iyy="6.83300359" iyz="0.01009318" izz="1.16967635"/>
+        </inertial>
+        <collision>
+            <origin xyz="0.03 0.0 0.05" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.1"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="head_joint1" type="revolute">
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <parent link="head_base_link"/>
+        <child link="head_link1"/>
+        <axis xyz="0.0 0.0 1.0"/>
+        <limit lower="-1.5208" upper="1.5208" effort="4.0" velocity="1.5"/>
+    </joint>
+    <link name="head_link2">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://galbot_g_series_description/meshes/v2_2_0/collision/original/head/head_link2.stl"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="0.03563 -0.03998 0.00678" rpy="0.0 0.0 0.0"/>
+            <mass value="0.8413"/>
+            <inertia ixx="0.00399161" ixy="0.00129825" ixz="3.920000e-06" iyy="0.00372602" iyz="7.750000e-06" izz="0.00553062"/>
+        </inertial>
+        <collision>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.001"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="head_joint2" type="revolute">
+        <origin xyz="0.0 0.0 0.0" rpy="-1.5707963267948966 0.0 0.0"/>
+        <parent link="head_link1"/>
+        <child link="head_link2"/>
+        <axis xyz="0.0 0.0 1.0"/>
+        <limit lower="-0.2143461" upper="0.4935988" effort="4.0" velocity="1.5"/>
+    </joint>
+    <link name="head_end_effector_mount_link">
+        <inertial>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <mass value="0.0"/>
+            <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
+        </inertial>
+    </link>
+    <joint name="head_end_effector_mount_joint" type="fixed">
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <parent link="head_link2"/>
+        <child link="head_end_effector_mount_link"/>
+    </joint>
+    <joint name="left_arm_base_joint" type="fixed">
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <parent link="torso_left_arm_mount_link"/>
+        <child link="left_arm_base_link"/>
+    </joint>
+    <link name="left_arm_base_link">
+        <inertial>
+            <origin xyz="0.0 0.0 -0.10506" rpy="0.0 0.0 0.0"/>
+            <mass value="0.92"/>
+            <inertia ixx="0.01075595" ixy="9.000000e-08" ixz="4.100000e-07" iyy="0.01077842" iyz="1.896000e-05" izz="7.042000e-04"/>
+        </inertial>
+    </link>
+    <link name="left_arm_link1">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://galbot_g_series_description/meshes/v2_2_0/collision/original/left_arm/A22/left_arm_link1.stl"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="0.0 9.700000e-04 -0.01539" rpy="0.0 0.0 0.0"/>
+            <mass value="1.6"/>
+            <inertia ixx="0.00332981" ixy="1.892000e-05" ixz="6.900000e-07" iyy="0.00339121" iyz="2.976000e-05" izz="0.0016524"/>
+        </inertial>
+        <collision>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.06"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="left_arm_joint1" type="revolute">
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.523598775598286"/>
+        <parent link="left_arm_base_link"/>
+        <child link="left_arm_link1"/>
+        <axis xyz="0.0 0.0 1.0"/>
+        <limit lower="-3.00432619" upper="3.00432619" effort="60.0" velocity="1.5"/>
+    </joint>
+    <link name="left_arm_link2">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://galbot_g_series_description/meshes/v2_2_0/collision/original/left_arm/A22/left_arm_link2.stl"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="0.0 0.09558 0.01015" rpy="0.0 0.0 0.0"/>
+            <mass value="1.43"/>
+            <inertia ixx="0.01937881" ixy="2.000000e-07" ixz="1.200000e-07" iyy="0.00157914" iyz="1.957800e-04" izz="0.01895181"/>
+        </inertial>
+        <collision>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.08"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.0 0.12 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.07"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="left_arm_joint2" type="revolute">
+        <origin xyz="0.0 0.0 0.0" rpy="1.5707963267949 0.0 3.14159265358979"/>
+        <parent link="left_arm_link1"/>
+        <child link="left_arm_link2"/>
+        <axis xyz="0.0 0.0 1.0"/>
+        <limit lower="-1.608062789" upper="1.608062789" effort="60.0" velocity="1.5"/>
+    </joint>
+    <link name="left_arm_link3">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://galbot_g_series_description/meshes/v2_2_0/collision/original/left_arm/A22/left_arm_link3.stl"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="0.0 8.800000e-04 -0.04936" rpy="0.0 0.0 0.0"/>
+            <mass value="1.49"/>
+            <inertia ixx="0.01187457" ixy="1.500000e-07" ixz="8.500000e-07" iyy="0.01178759" iyz="1.004800e-04" izz="0.0013715"/>
+        </inertial>
+        <collision>
+            <origin xyz="0.0 0.0 -0.156" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.047"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.01955 -0.005 -0.09" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.035"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.07"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="left_arm_joint3" type="revolute">
+        <origin xyz="0.0 0.35 0.0" rpy="1.5707963267949 1.0471975511966 -3.14159265358979"/>
+        <parent link="left_arm_link2"/>
+        <child link="left_arm_link3"/>
+        <axis xyz="0.0 0.0 1.0"/>
+        <limit lower="-2.916972222" upper="2.916972222" effort="30.0" velocity="1.5"/>
+    </joint>
+    <link name="left_arm_link4">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://galbot_g_series_description/meshes/v2_2_0/collision/original/left_arm/A22/left_arm_link4.stl"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="0.0 0.05614 0.01917" rpy="0.0 0.0 0.0"/>
+            <mass value="1.12"/>
+            <inertia ixx="0.00701388" ixy="3.200000e-07" ixz="1.160000e-06" iyy="0.00161854" iyz="3.394400e-04" izz="0.0065012"/>
+        </inertial>
+        <collision>
+            <origin xyz="0.0 0.0965 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.042"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="left_arm_joint4" type="revolute">
+        <origin xyz="0.0 0.0 0.0" rpy="1.5707963267949 0.0 -3.14159265358979"/>
+        <parent link="left_arm_link3"/>
+        <child link="left_arm_link4"/>
+        <axis xyz="0.0 0.0 1.0"/>
+        <limit lower="-2.5679938779914946" upper="1.869862177" effort="30.0" velocity="1.5"/>
+    </joint>
+    <link name="left_arm_link5">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://galbot_g_series_description/meshes/v2_2_0/collision/original/left_arm/A22/left_arm_link5.stl"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="4.400000e-04 0.00169 -0.13306" rpy="0.0 0.0 0.0"/>
+            <mass value="1.16"/>
+            <inertia ixx="0.02580993" ixy="1.980000e-05" ixz="5.605000e-05" iyy="0.02530313" iyz="2.093200e-04" izz="0.00115848"/>
+        </inertial>
+        <collision>
+            <origin xyz="0.0 0.0 -0.192" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.056"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.0 0.0 -0.1" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.07"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="left_arm_joint5" type="revolute">
+        <origin xyz="0.0 0.36 0.0" rpy="-1.5707963267949 0.0 0.0"/>
+        <parent link="left_arm_link4"/>
+        <child link="left_arm_link5"/>
+        <axis xyz="0.0 0.0 1.0"/>
+        <limit lower="-2.916972222" upper="2.916972222" effort="10.0" velocity="1.5"/>
+    </joint>
+    <link name="left_arm_link6">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://galbot_g_series_description/meshes/v2_2_0/collision/original/left_arm/A22/left_arm_link6.stl"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="-8.800000e-04 -0.00727 -1.200000e-04" rpy="0.0 0.0 0.0"/>
+            <mass value="0.4875"/>
+            <inertia ixx="2.755700e-04" ixy="7.900000e-07" ixz="1.480000e-06" iyy="2.897800e-04" iyz="2.250000e-06" izz="2.968400e-04"/>
+        </inertial>
+        <collision>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.06"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="left_arm_joint6" type="revolute">
+        <origin xyz="0.0 0.0 0.0" rpy="1.5707963267949 1.5707963267949 0.0"/>
+        <parent link="left_arm_link5"/>
+        <child link="left_arm_link6"/>
+        <axis xyz="0.0 0.0 1.0"/>
+        <limit lower="-0.8226646259971648" upper="0.7353981633974483" effort="10.0" velocity="1.5"/>
+    </joint>
+    <link name="left_arm_link7">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://galbot_g_series_description/meshes/v2_2_0/collision/original/left_arm/A22/left_arm_link7.stl"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="-0.05776 -0.00675 0.01135" rpy="0.0 0.0 0.0"/>
+            <mass value="0.8"/>
+            <inertia ixx="0.00116375" ixy="3.323600e-04" ixz="1.486900e-04" iyy="0.00424012" iyz="6.570000e-06" izz="0.00418879"/>
+        </inertial>
+        <collision>
+            <origin xyz="-0.068 0.0 -0.068" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.027"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="-0.074 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.04"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="-0.055 0.0 0.045" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.02"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.0 0.0 0.04" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.03"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="left_arm_joint7" type="revolute">
+        <origin xyz="0.0 0.0 0.0" rpy="1.5707963267949 0.0 0.0"/>
+        <parent link="left_arm_link6"/>
+        <child link="left_arm_link7"/>
+        <axis xyz="0.0 0.0 1.0"/>
+        <limit lower="-1.538202778" upper="1.538202778" effort="10.0" velocity="1.5"/>
+    </joint>
+    <link name="left_arm_end_effector_mount_link">
+        <inertial>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <mass value="0.0"/>
+            <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
+        </inertial>
+    </link>
+    <joint name="left_arm_end_effector_mount_joint" type="fixed">
+        <origin xyz="-0.10926 0.0 0.0" rpy="3.14159265358979 0.0 3.14159265358979"/>
+        <parent link="left_arm_link7"/>
+        <child link="left_arm_end_effector_mount_link"/>
+    </joint>
+    <joint name="right_arm_base_joint" type="fixed">
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <parent link="torso_right_arm_mount_link"/>
+        <child link="right_arm_base_link"/>
+    </joint>
+    <link name="right_arm_base_link">
+        <inertial>
+            <origin xyz="0.0 0.0 -0.10506" rpy="0.0 0.0 0.0"/>
+            <mass value="0.92"/>
+            <inertia ixx="0.01075595" ixy="9.000000e-08" ixz="4.100000e-07" iyy="0.01077842" iyz="1.896000e-05" izz="7.042000e-04"/>
+        </inertial>
+    </link>
+    <link name="right_arm_link1">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://galbot_g_series_description/meshes/v2_2_0/collision/original/right_arm/A22/right_arm_link1.stl"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="0.0 -9.700000e-04 -0.01539" rpy="0.0 0.0 0.0"/>
+            <mass value="1.6"/>
+            <inertia ixx="0.00332981" ixy="1.892000e-05" ixz="6.900000e-07" iyy="0.00339121" iyz="2.976000e-05" izz="0.0016524"/>
+        </inertial>
+        <collision>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.05"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="right_arm_joint1" type="revolute">
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 -0.523598775598286"/>
+        <parent link="right_arm_base_link"/>
+        <child link="right_arm_link1"/>
+        <axis xyz="0.0 0.0 1.0"/>
+        <limit lower="-3.00432619" upper="3.00432619" effort="60.0" velocity="1.5"/>
+    </joint>
+    <link name="right_arm_link2">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://galbot_g_series_description/meshes/v2_2_0/collision/original/right_arm/A22/right_arm_link2.stl"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="0.0 -0.09558 0.01015" rpy="0.0 0.0 0.0"/>
+            <mass value="1.43"/>
+            <inertia ixx="0.01937881" ixy="2.000000e-07" ixz="1.200000e-07" iyy="0.00157914" iyz="1.957800e-04" izz="0.01895181"/>
+        </inertial>
+        <collision>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.08"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.0 -0.12 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.07"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="right_arm_joint2" type="revolute">
+        <origin xyz="0.0 0.0 0.0" rpy="-1.5707963267949 0.0 3.14159265358979"/>
+        <parent link="right_arm_link1"/>
+        <child link="right_arm_link2"/>
+        <axis xyz="0.0 0.0 1.0"/>
+        <limit lower="-1.608062789" upper="1.608062789" effort="60.0" velocity="1.5"/>
+    </joint>
+    <link name="right_arm_link3">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://galbot_g_series_description/meshes/v2_2_0/collision/original/right_arm/A22/right_arm_link3.stl"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="0.0 -8.800000e-04 -0.04936" rpy="0.0 0.0 0.0"/>
+            <mass value="1.48"/>
+            <inertia ixx="0.01187457" ixy="1.500000e-07" ixz="8.500000e-07" iyy="0.01178759" iyz="1.004800e-04" izz="0.0013715"/>
+        </inertial>
+        <collision>
+            <origin xyz="0.0 0.0 -0.156" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.047"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.01955 0.005 -0.09" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.035"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.07"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="right_arm_joint3" type="revolute">
+        <origin xyz="0.0 -0.35 0.0" rpy="-1.5707963267949 1.04719755119629 -3.14159265358979"/>
+        <parent link="right_arm_link2"/>
+        <child link="right_arm_link3"/>
+        <axis xyz="0.0 0.0 1.0"/>
+        <limit lower="-2.916972222" upper="2.916972222" effort="30.0" velocity="1.5"/>
+    </joint>
+    <link name="right_arm_link4">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://galbot_g_series_description/meshes/v2_2_0/collision/original/right_arm/A22/right_arm_link4.stl"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="0.0 -0.05614 0.01917" rpy="0.0 0.0 0.0"/>
+            <mass value="1.12"/>
+            <inertia ixx="0.00701388" ixy="3.200000e-07" ixz="1.160000e-06" iyy="0.00161854" iyz="3.394400e-04" izz="0.0065012"/>
+        </inertial>
+        <collision>
+            <origin xyz="0.0 -0.0965 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.042"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="right_arm_joint4" type="revolute">
+        <origin xyz="0.0 0.0 0.0" rpy="-1.57079632679459 0.0 3.14159265358979"/>
+        <parent link="right_arm_link3"/>
+        <child link="right_arm_link4"/>
+        <axis xyz="0.0 0.0 1.0"/>
+        <limit lower="-1.869862177" upper="2.5679938779914946" effort="30.0" velocity="1.5"/>
+    </joint>
+    <link name="right_arm_link5">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://galbot_g_series_description/meshes/v2_2_0/collision/original/right_arm/A22/right_arm_link5.stl"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="4.400000e-04 0.00169 -0.13306" rpy="0.0 0.0 0.0"/>
+            <mass value="1.16"/>
+            <inertia ixx="0.02580993" ixy="1.980000e-05" ixz="5.605000e-05" iyy="0.02530313" iyz="2.093200e-04" izz="0.00115848"/>
+        </inertial>
+        <collision>
+            <origin xyz="0.0 0.0 -0.192" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.056"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.0 0.0 -0.1" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.07"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="right_arm_joint5" type="revolute">
+        <origin xyz="0.0 -0.36 0.0" rpy="-1.5707963267949 0.0 3.14159265358979"/>
+        <parent link="right_arm_link4"/>
+        <child link="right_arm_link5"/>
+        <axis xyz="0.0 0.0 1.0"/>
+        <limit lower="-2.916972222" upper="2.916972222" effort="10.0" velocity="1.5"/>
+    </joint>
+    <link name="right_arm_link6">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://galbot_g_series_description/meshes/v2_2_0/collision/original/right_arm/A22/right_arm_link6.stl"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="-8.800000e-04 0.00727 -1.200000e-04" rpy="0.0 0.0 0.0"/>
+            <mass value="0.4837"/>
+            <inertia ixx="2.755700e-04" ixy="7.600000e-07" ixz="1.440000e-06" iyy="2.897800e-04" iyz="2.250000e-06" izz="2.968400e-04"/>
+        </inertial>
+        <collision>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.06"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="right_arm_joint6" type="revolute">
+        <origin xyz="0.0 0.0 0.0" rpy="1.5707963267949 1.5707963267949 0.0"/>
+        <parent link="right_arm_link5"/>
+        <child link="right_arm_link6"/>
+        <axis xyz="0.0 0.0 1.0"/>
+        <limit lower="-0.7353981633974483" upper="0.8226646259971648" effort="10.0" velocity="1.5"/>
+    </joint>
+    <link name="right_arm_link7">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://galbot_g_series_description/meshes/v2_2_0/collision/original/right_arm/A22/right_arm_link7.stl"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <origin xyz="-0.05751 0.00684 0.01187" rpy="0.0 0.0 0.0"/>
+            <mass value="0.8"/>
+            <inertia ixx="0.00117613" ixy="3.379300e-04" ixz="1.662000e-04" iyy="0.00423935" iyz="8.590000e-06" izz="0.00417642"/>
+        </inertial>
+        <collision>
+            <origin xyz="-0.068 0.0 -0.068" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.027"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="-0.074 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.04"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="-0.055 0.0 0.045" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.02"/>
+            </geometry>
+        </collision>
+        <collision>
+            <origin xyz="0.0 0.0 0.04" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.03"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="right_arm_joint7" type="revolute">
+        <origin xyz="0.0 0.0 0.0" rpy="-1.5707963267949 0.0 0.0"/>
+        <parent link="right_arm_link6"/>
+        <child link="right_arm_link7"/>
+        <axis xyz="0.0 0.0 1.0"/>
+        <limit lower="-1.538202778" upper="1.538202778" effort="10.0" velocity="1.5"/>
+    </joint>
+    <link name="right_arm_end_effector_mount_link">
+        <inertial>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <mass value="0.0"/>
+            <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
+        </inertial>
+    </link>
+    <joint name="right_arm_end_effector_mount_joint" type="fixed">
+        <origin xyz="-0.10926 0.0 0.0" rpy="3.14159265358979 0.0 3.14159265358948"/>
+        <parent link="right_arm_link7"/>
+        <child link="right_arm_end_effector_mount_link"/>
+    </joint>
+</robot>

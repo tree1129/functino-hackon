@@ -1,0 +1,4 @@
+#!/bin/bash
+export LD_LIBRARY_PATH=/data/galbot/lib:$LD_LIBRARY_PATH
+export PYTHONPATH=/data/galbot/lib:$PYTHONPATH
+exec python3 /home/galbot/tts/tts_say.py "$@"

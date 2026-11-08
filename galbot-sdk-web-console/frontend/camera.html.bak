@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Galbot 相机监视器</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #0b0e13; color: #dbe3ee; font: 14px/1.5 "Segoe UI", "Microsoft YaHei", sans-serif; }
+  #gate[hidden], #app[hidden] { display: none !important; }
+  #gate { position: fixed; inset: 0; display: grid; place-items: center; background: #0b0e13; z-index: 10; }
+  #gate .card { width: min(420px, 90vw); background: #141a23; border: 1px solid #2a3442; border-radius: 14px; padding: 28px; }
+  #gate h1 { margin: 0 0 8px; font-size: 20px; }
+  #gate p { margin: 0 0 18px; color: #8b98a9; }
+  #gate input { width: 100%; padding: 12px 14px; margin-bottom: 12px; background: #0f141b; border: 1px solid #2a3442; border-radius: 8px; color: #fff; font-size: 18px; letter-spacing: 2px; text-transform: uppercase; }
+  #gate button { width: 100%; padding: 12px; background: #3b82f6; border: 0; border-radius: 8px; color: #fff; font-size: 15px; cursor: pointer; }
+  #gate .err { color: #f87171; min-height: 20px; margin-top: 10px; font-size: 13px; }
+  #app { display: flex; flex-direction: column; height: 100vh; }
+  header { display: flex; align-items: center; gap: 14px; padding: 10px 16px; background: #111720; border-bottom: 1px solid #222c39; }
+  header strong { font-size: 15px; }
+  header .spacer { flex: 1; }
+  header .pill { padding: 4px 10px; border-radius: 999px; background: #1b2531; color: #8b98a9; font-size: 12px; }
+  header .pill.ok { color: #4ade80; }
+  header .pill.bad { color: #f87171; }
+  header button { padding: 7px 12px; background: #1b2531; color: #dbe3ee; border: 1px solid #2a3442; border-radius: 8px; cursor: pointer; }
+  #grid { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 10px; padding: 10px; overflow: auto; }
+  .tile { display: flex; flex-direction: column; min-height: 260px; background: #111720; border: 1px solid #222c39; border-radius: 10px; overflow: hidden; }
+  .tile h2 { display: flex; align-items: center; gap: 8px; margin: 0; padding: 8px 12px; font-size: 13px; font-weight: 600; background: #151d27; border-bottom: 1px solid #222c39; }
+  .tile h2 .dot { width: 8px; height: 8px; border-radius: 50%; background: #f87171; }
+  .tile h2 .dot.ok { background: #4ade80; }
+  .tile h2 .meta { margin-left: auto; color: #7c8a9c; font-weight: 400; font-size: 12px; }
+  .tile .body { position: relative; flex: 1; display: grid; place-items: center; background: #0a0d12; min-height: 220px; }
+  .tile img, .tile canvas { max-width: 100%; max-height: 100%; object-fit: contain; display: block; }
+  .tile .empty { position: absolute; inset: 0; display: grid; place-items: center; color: #5f6c7d; font-size: 13px; text-align: center; padding: 12px; }
+  .tile .empty small { display: block; color: #475366; margin-top: 4px; }
+  .tile.big { grid-column: span 2; grid-row: span 2; }
+  @media (max-width: 900px) { #grid { grid-template-columns: 1fr; } .tile.big { grid-column: span 1; grid-row: span 1; } }
+</style>
+</head>
+<body>
+<div id="gate">
+  <form class="card" id="gateForm">
+    <h1>Galbot 相机监视器</h1>
+    <p>请输入控制台本次启动的访问码（与控制台相同）。</p>
+    <input id="code" autocomplete="one-time-code" placeholder="例如 6VCCBPF9" required />
+    <button type="submit">进入监视器</button>
+    <div class="err" id="gateErr"></div>
+  </form>
+</div>
+
+<div id="app" hidden>
+  <header>
+    <strong>Galbot 相机监视器</strong>
+    <span class="pill" id="connPill">未连接</span>
+    <span class="pill" id="fpsPill">-- fps</span>
+    <div class="spacer"></div>
+    <button id="btnFullscreen" type="button">全屏</button>
+    <a href="/" style="color:#8b98a9;font-size:12px">返回控制台</a>
+  </header>
+  <main id="grid"></main>
+</div>
+
+<script>
+const SOURCES = [
+  ['head_fisheye', '头部左目'],
+  ['head_right', '头部右目'],
+  ['surround_front_left', '环视前左'],
+  ['surround_front_right', '环视前右'],
+  ['surround_rear_left', '环视后左'],
+  ['surround_rear_right', '环视后右'],
+  ['left_rgb', '左腕 RGB'],
+  ['right_rgb', '右腕 RGB'],
+  ['left_depth', '左腕深度'],
+  ['right_depth', '右腕深度'],
+];
+const SOURCE_IDS = {1:'left_rgb',2:'left_depth',3:'right_rgb',4:'right_depth',5:'head_fisheye',6:'surround_front_left',7:'surround_front_right',8:'surround_rear_left',9:'surround_rear_right',10:'head_right'};
+const NAME = Object.fromEntries(SOURCES);
+
+const grid = document.getElementById('grid');
+const tiles = new Map();
+for (const [source, label] of SOURCES) {
+  const el = document.createElement('section');
+  el.className = 'tile';
+  el.innerHTML = `<h2><span class="dot"></span>${label}<span class="meta">等待</span></h2>
+    <div class="body"><div class="empty">未收到画面<small>${source}</small></div><img hidden alt="${label}"><canvas hidden></canvas></div>`;
+  el.querySelector('h2').addEventListener('click', () => el.classList.toggle('big'));
+  grid.append(el);
+  tiles.set(source, { el, dot: el.querySelector('.dot'), meta: el.querySelector('.meta'), img: el.querySelector('img'), canvas: el.querySelector('canvas'), empty: el.querySelector('.empty'), last: 0, frames: 0 });
+}
+
+const gate = document.getElementById('gate');
+const app = document.getElementById('app');
+const gateErr = document.getElementById('gateErr');
+const connPill = document.getElementById('connPill');
+const fpsPill = document.getElementById('fpsPill');
+let ws = null, connected = false, totalFrames = 0, lastFpsAt = performance.now();
+
+async function isAuthed() {
+  try { const r = await fetch('/api/auth/status', {cache:'no-store'}); return (await r.json()).authenticated === true; } catch { return false; }
+}
+async function login(code) {
+  const r = await fetch('/api/auth/login', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({code})});
+  return r.ok;
+}
+
+async function boot() {
+  if (!(await isAuthed())) { gate.hidden = false; app.hidden = true; return; }
+  gate.hidden = true; app.hidden = false;
+  connect();
+}
+
+function connect() {
+  if (ws && ws.readyState <= WebSocket.OPEN) return;
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  ws = new WebSocket(`${proto}://${location.host}/api/robot/camera-stream`);
+  ws.binaryType = 'arraybuffer';
+  ws.onopen = () => {
+    connected = true; connPill.textContent = '已连接'; connPill.className = 'pill ok';
+    for (const [source] of SOURCES) ws.send(JSON.stringify({op:'subscribe', source, fps: 10}));
+  };
+  ws.onmessage = (event) => {
+    if (typeof event.data === 'string') {
+      try { const msg = JSON.parse(event.data); if (msg.type === 'camera_error') markError(msg.source, msg.detail); } catch {}
+      return;
+    }
+    handleFrame(event.data);
+  };
+  ws.onclose = () => {
+    connected = false; connPill.textContent = '断开，重连中'; connPill.className = 'pill bad';
+    setTimeout(connect, 1000);
+  };
+}
+
+function markError(source, detail) {
+  const t = tiles.get(source); if (!t) return;
+  t.meta.textContent = '无数据'; t.dot.className = 'dot';
+  t.empty.hidden = false; t.empty.innerHTML = `未收到画面<small>${detail || source}</small>`;
+}
+
+function handleFrame(buffer) {
+  const view = new DataView(buffer);
+  if (view.byteLength < 26) return;
+  const magic = String.fromCharCode(view.getUint8(0), view.getUint8(1), view.getUint8(2), view.getUint8(3));
+  if (magic !== 'GBC1') return;
+  const source = SOURCE_IDS[view.getUint8(4)];
+  const kind = view.getUint8(5) ? 'depth' : 'rgb';
+  const width = view.getUint16(6), height = view.getUint16(8);
+  const depthScale = view.getFloat32(18), depthLow = view.getUint16(22), depthHigh = view.getUint16(24);
+  const data = new Uint8Array(buffer, 26);
+  const t = tiles.get(source); if (!t) return;
+  t.last = Date.now(); t.frames++;
+  totalFrames++;
+  t.dot.className = 'dot ok';
+  t.meta.textContent = `${width}×${height} · ${kind === 'depth' ? '深度' : 'RGB'}`;
+  t.empty.hidden = true;
+  if (kind === 'depth') paintDepth(t, width, height, data, depthScale, depthLow, depthHigh);
+  else paintImage(t, data);
+}
+
+function paintImage(t, data) {
+  t.canvas.hidden = true; t.img.hidden = false;
+  const old = t.img.dataset.url; if (old) URL.revokeObjectURL(old);
+  const url = URL.createObjectURL(new Blob([data], {type:'image/jpeg'}));
+  t.img.dataset.url = url; t.img.src = url;
+}
+
+function heat(v) {
+  const stops = [[35,63,180],[0,188,212],[92,205,99],[253,216,53],[229,57,53]];
+  const s = Math.max(0, Math.min(3.999, v * 4)), i = Math.floor(s), f = s - i;
+  return stops[i].map((c, k) => Math.round(c + (stops[i+1][k] - c) * f));
+}
+
+function paintDepth(t, width, height, data, scale, low, high) {
+  if (!width || !height || data.length < width * height) return;
+  const canvas = t.canvas;
+  canvas.width = width; canvas.height = height;
+  const image = new ImageData(width, height);
+  for (let p = 0; p < width * height; p++) {
+    const v = data[p], c = v ? heat(v / 255) : [15,18,24];
+    image.data.set([c[0], c[1], c[2], v ? 255 : 0], p * 4);
+  }
+  canvas.getContext('2d').putImageData(image, 0, 0);
+  canvas.title = `深度约 ${(low / (scale || 1)).toFixed(2)}–${(high / (scale || 1)).toFixed(2)} m`;
+  t.img.hidden = true; canvas.hidden = false;
+}
+
+setInterval(() => {
+  const now = performance.now();
+  const delta = (now - lastFpsAt) / 1000;
+  fpsPill.textContent = `${(totalFrames / Math.max(0.1, delta)).toFixed(1)} fps`;
+  totalFrames = 0; lastFpsAt = now;
+  for (const t of tiles.values()) {
+    if (!t.last) continue;
+    if (Date.now() - t.last > 3000) { t.dot.className = 'dot'; t.meta.textContent = '无数据'; t.empty.hidden = false; t.empty.innerHTML = `未收到画面<small>超过 3 秒</small>`; }
+  }
+}, 1000);
+
+document.getElementById('gateForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  gateErr.textContent = '';
+  const ok = await login(document.getElementById('code').value.trim());
+  if (!ok) { gateErr.textContent = '访问码错误或服务已重启，请重新输入'; return; }
+  boot();
+});
+
+document.getElementById('btnFullscreen').addEventListener('click', () => {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
+});
+
+boot();
+</script>
+</body>
+</html>

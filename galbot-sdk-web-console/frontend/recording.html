@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Galbot 数据录制与回放</title>
+  <link rel="stylesheet" href="/frontend/styles/style.css" />
+  <link rel="stylesheet" href="/frontend/styles/recording.css" />
+  <link rel="stylesheet" href="/frontend/styles/auth.css" />
+</head>
+<body class="recording-page" data-auth-entry="console">
+  <div id="consoleApp" class="recording-shell" hidden>
+    <header class="recording-topbar"><h1>数据录制与回放</h1><span>Rerun 数据诊断</span><nav><a href="/frontend/console.html#robot">控制台</a><a href="/frontend/config.html">配置</a></nav></header>
+    <main class="recording-layout">
+      <button id="btnToggleRecordingSidebar" class="recording-edge-toggle recording-edge-toggle-left" type="button" aria-controls="recordingSidebar" aria-expanded="true" title="收起录制栏">‹</button>
+      <button id="btnToggleCameraSidebar" class="recording-edge-toggle recording-edge-toggle-right" type="button" aria-controls="cameraSidebar" aria-expanded="true" title="收起相机栏">›</button>
+      <aside id="recordingSidebar" class="recording-sidebar">
+        <section class="recording-card"><h2>录制状态</h2><div class="recording-status-grid"><div class="recording-metric"><span>状态</span><strong id="recordingState">未启用</strong></div><div class="recording-metric"><span>时长</span><strong id="recordingDuration">00:00</strong></div><div class="recording-metric"><span>文件大小</span><strong id="recordingSize">0 B</strong></div><div class="recording-metric"><span>健康状态</span><strong id="recordingHealth">正常</strong></div></div><p id="recordingNotice" class="recording-notice"></p></section>
+        <fieldset id="recordingConfig" class="recording-card"><h2>本次录制</h2><div id="recordingSources"></div><label>机器人模型<select id="recordingRepresentation"><option value="visual">精细视觉模型</option><option value="collision">碰撞简化模型</option></select></label><label>采样频率 Hz<input id="recordingSampleHz" type="number" min="0.2" max="30" step="0.2" value="5" /></label><label>相机帧率<input id="recordingCameraFps" type="number" min="1" max="10" value="5" /></label><label>相对目录<input id="recordingDirectory" placeholder="例如 experiments/run-01" /></label><label>文件名<input id="recordingFilename" placeholder="留空则使用当前时间" /></label><small>保存根目录：<span id="recordingRoot">读取中</span></small><div class="recording-actions"><button id="btnArmRecording" type="button">启用录制</button></div></fieldset>
+        <section class="recording-card"><div class="recording-actions"><h2>历史记录</h2><button id="btnRefreshRecordings" type="button">刷新</button></div><div id="recordingList" class="recording-list"></div></section>
+      </aside>
+      <section class="recording-stage">
+        <header class="viewer-toolbar">
+          <div><span>场景与时间轴</span><strong id="viewerTitle">未载入数据</strong></div>
+          <div class="viewer-actions"><select id="playbackRepresentation" aria-label="播放机器人模型"><option value="visual">精细视觉模型</option><option value="collision">碰撞简化模型</option></select><button id="btnLiveRecordingView" type="button">查看实时相机</button><button id="btnOpenRecording" class="primary" type="button">加载本地 Rerun 文件</button><input id="recordingFileInput" type="file" accept=".rrd,application/octet-stream" hidden /></div>
+        </header>
+        <div class="viewer-surface">
+          <div id="viewerEmpty" class="viewer-empty">
+            <div class="viewer-empty-icon">▶</div><strong>载入机器人数据</strong>
+            <p>选择左侧历史记录，或加载本地 Rerun <code>.rrd</code> 文件。</p>
+            <button id="btnOpenRecordingEmpty" class="primary" type="button">选择文件</button>
+          </div>
+          <iframe id="rerunViewer" class="rerun-viewer" title="Rerun Viewer" allow="fullscreen" hidden></iframe>
+        </div>
+      </section>
+      <aside id="cameraSidebar" class="camera-sidebar">
+        <header><div><span>实时监看</span><h2>相机</h2></div><output id="cameraWindowCount">0 个窗口</output></header>
+        <p class="camera-sidebar-help">选择实时相机画面。拖动窗口标题可浮动，双击标题可归位。</p>
+        <div class="camera-add-row"><select id="cameraSourceSelect" aria-label="相机来源"></select><button id="btnAddCameraWindow" type="button">添加</button></div>
+        <section id="cameraWindows" class="camera-window-grid" aria-label="实时相机画面">
+          <div class="camera-dock-empty">尚未添加实时相机<br><small>录制文件中的相机数据会显示在中间的 Rerun 视图中</small></div>
+        </section>
+      </aside>
+    </main>
+  </div>
+  <script src="/frontend/pages/console-bootstrap.js"></script>
+  <script type="module" src="/frontend/pages/recording.js"></script>
+</body>
+</html>

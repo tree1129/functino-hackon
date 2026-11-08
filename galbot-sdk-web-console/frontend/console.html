@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Galbot SDK 机器人控制台</title>
+  <link rel="stylesheet" href="/frontend/styles/style.css" />
+  <link rel="stylesheet" href="/frontend/styles/console.css" />
+  <link rel="stylesheet" href="/frontend/styles/motion.css" />
+  <link rel="stylesheet" href="/frontend/styles/recording.css" />
+  <link rel="stylesheet" href="/frontend/styles/auth.css" />
+</head>
+<body>
+  <section id="authGate" class="auth-gate" hidden aria-labelledby="authTitle">
+    <form id="authForm" class="auth-card">
+      <div class="auth-brand"><span class="auth-mark">G</span><div><span>GALBOT</span><h1 id="authTitle">Galbot 网页控制台</h1></div></div>
+      <p>请输入本次服务启动时显示的访问码。</p>
+      <label for="authCode">访问码</label>
+      <input id="authCode" name="code" autocomplete="one-time-code" required autofocus />
+      <button id="authSubmit" class="auth-submit" type="submit">建立连接 <span>→</span></button>
+      <p id="authError" class="auth-error" role="alert"></p>
+    </form>
+  </section>
+  <div id="consoleApp" class="console-app" hidden>
+    <header class="console-topbar">
+      <div class="brand-block">
+        <strong>Galbot SDK</strong>
+        <span>机器人控制台</span>
+      </div>
+      <span id="connPill" class="status-pill bad">未连接</span>
+      <span id="modePill" class="status-pill ok">脱机</span>
+      <span id="modelPill" class="status-pill">机型未知</span>
+      <div class="spacer"></div>
+      <button id="btnStop" class="btn-stop" type="button">STOP</button>
+      <button id="btnResumeEmergency" class="btn btn-resume-emergency" type="button" hidden>恢复急停</button>
+    </header>
+
+    <nav class="workspace-nav" aria-label="工作区">
+      <div class="nav-title">工作区</div>
+      <a class="workspace-link" href="/frontend/core.html"><span>00</span>核心控制台</a>
+      <button class="workspace-link active" data-workspace="robot" type="button"><span>01</span>Robot</button>
+      <button class="workspace-link" data-workspace="motion" type="button"><span>02</span>Motion</button>
+      <button class="workspace-link" data-workspace="navigation" type="button"><span>03</span>Navigation</button>
+      <a class="workspace-link" href="/frontend/recording.html"><span>04</span>数据录制与回放</a>
+      <a class="workspace-link" href="/frontend/config.html"><span>05</span>配置可视化</a>
+      <a class="workspace-link" href="/frontend/camera.html"><span>06</span>相机监视</a>
+      <div class="workspace-summary">
+        <span>当前工作区</span>
+        <strong id="workspaceName">Robot</strong>
+        <p id="workspaceSummary">状态、关节与共享场景</p>
+      </div>
+    </nav>
+
+    <main class="scene-workspace">
+      <canvas id="mapCanvas"></canvas>
+      <div class="scene-toolbar">
+        <button class="btn small active" id="btnView3d" type="button">3D</button>
+        <button class="btn small" id="btnViewTop" type="button">俯视</button>
+      </div>
+      <div class="scene-heading">
+        <span id="sceneEyebrow">ROBOT / LIVE MODEL</span>
+        <strong id="sceneTitle">机器人状态</strong>
+      </div>
+      <div id="sceneStatus" class="scene-status">场景初始化中</div>
+      <div id="sceneShortcuts" class="scene-shortcuts" aria-label="场景快捷键">
+        <span id="scenePointerHint">左键旋转 · Shift + 左键或右键平移 · 滚轮缩放</span>
+        <span><kbd>F</kbd> 切换到 45° 机器人聚焦</span>
+      </div>
+      <aside id="robotSensorOverlay" class="robot-sensor-overlay" aria-label="机器人场景状态" hidden>
+        <div class="sensor-overlay-head"><span>ROBOT STATUS</span><strong>场景实时信息</strong></div>
+        <section id="scenePowerReadout" class="scene-status-group" hidden>
+          <strong>基础电源</strong>
+          <div class="sensor-readout"><span>电压 / 电流</span><output id="scenePowerElectrical">--</output></div>
+          <div class="sensor-readout"><span>温度</span><output id="scenePowerTemperature">--</output></div>
+          <div class="sensor-readout"><span>充电状态</span><output id="scenePowerCharging">--</output></div>
+        </section>
+        <section id="sceneRobotPoseReadout" class="scene-status-group" hidden><strong>底盘位姿 · map</strong><output>暂无数据</output></section>
+        <section id="sceneJointLegReadout" class="scene-status-group" hidden><strong>leg</strong><output>暂无数据</output></section>
+        <section id="sceneJointHeadReadout" class="scene-status-group" hidden><strong>head</strong><output>暂无数据</output></section>
+        <section id="sceneJointLeftArmReadout" class="scene-status-group" hidden><strong>left_arm</strong><output>暂无数据</output></section>
+        <section id="sceneJointRightArmReadout" class="scene-status-group" hidden><strong>right_arm</strong><output>暂无数据</output></section>
+      </aside>
+      <section id="cameraWindows" class="camera-window-grid" aria-label="相机画面" hidden></section>
+      <button id="btnToggleJoints" class="drawer-toggle joint-toggle" type="button" aria-controls="jointDrawer" aria-expanded="false">展开关节</button>
+      <aside id="jointDrawer" class="scene-joint-drawer collapsed">
+        <div class="section-head"><div><span>LIVE JOINT STATE</span><h2>真机关节角</h2></div></div>
+        <div class="joint-actions"><label class="check-row"><input id="syncRobotJoints" type="checkbox" checked> 同步真机关节角</label></div>
+        <p class="drawer-hint">显示 leg、head、left_arm 与 right_arm 的关节角。勾选时持续同步真机；取消勾选后可自由拖动滑块观察模型。</p>
+        <div id="jointControls" class="joint-controls">等待机器人模型加载</div>
+      </aside>
+    </main>
+
+    <aside id="contextPanel" class="context-panel">
+      <div class="workspace-panel active" data-panel="robot">
+        <header><span>ROBOT</span><h1>机器人状态</h1></header>
+        <div class="metric-grid">
+          <div id="robotSdkMetric"><span>SDK</span><strong id="robotSdkState">等待</strong></div>
+          <div id="robotLocalMetric"><span>定位</span><strong id="robotLocalState">等待</strong></div>
+        </div>
+        <section class="console-section camera-control-section">
+          <h2>相机窗口</h2>
+          <p class="inline-status">仅在窗口可见时按需读取并传输一帧；关闭、切换工作区或最小化页面会停止拉取。</p>
+          <div class="camera-add-row"><select id="cameraSourceSelect" aria-label="相机来源"></select><button id="btnAddCameraWindow" class="btn small" type="button">添加窗口</button></div>
+          <output id="cameraWindowCount" class="camera-window-count">0 个窗口</output>
+          <p class="inline-status">相机窗口与模型共用当前场景；仅窗口可见时才订阅相机帧。</p>
+        </section>
+        <section class="console-section">
+          <h2>关节预览与下发</h2>
+          <div class="field"><label>关节组</label><select id="robotPreviewGroup"><option value="head" selected>head</option><option value="leg">leg</option><option value="left_arm">left_arm</option><option value="right_arm">right_arm</option></select></div>
+          <div class="motion-actions"><button id="btnRobotSyncJoints" class="btn small" type="button">同步真机关节</button><button id="btnRobotResetJoints" class="btn small" type="button">重置预览</button></div>
+          <div class="motion-execute-grid"><label>最大速度 rad/s<input id="robotJointSpeed" type="number" min="0.01" max="0.5" step="0.01" value="0.10" /></label><label>超时 (s)<input id="robotJointTimeout" type="number" min="1" max="60" value="10" /></label></div>
+          <button id="btnRobotApplyJoints" class="btn btn-danger full" type="button">确认下发当前关节组</button>
+        </section>
+        <section class="console-section">
+          <h2>夹爪控制</h2>
+          <div class="motion-execute-grid"><label>侧<select id="robotGripperSide"><option value="left">左</option><option value="right">右</option></select></label><label>开口宽度 (m)<input id="robotGripperWidth" type="number" min="0" max="0.12" step="0.005" value="0.05" /></label><label>速度 (m/s)<input id="robotGripperSpeed" type="number" min="0.01" max="0.2" step="0.01" value="0.05" /></label><label>力 (N)<input id="robotGripperEffort" type="number" min="1" max="100" step="1" value="10" /></label></div>
+          <button id="btnRobotSetGripper" class="btn btn-danger full" type="button">确认设置夹爪</button>
+        </section>
+        <section class="console-section">
+          <h2>底盘实时摇杆</h2>
+          <p class="inline-status">拖动摇杆控制平面速度，轻推可精细调整，推至外圈达到最大速度。松手自动停止。</p>
+          <div class="joystick-layout"><div id="baseJoystick" class="base-joystick" role="application" aria-label="底盘速度摇杆"><div class="joystick-ring"></div><div id="baseJoystickKnob" class="joystick-knob"></div></div><div class="joystick-readout"><span>vx</span><strong id="joystickVx">0.00</strong><span>vy</span><strong id="joystickVy">0.00</strong><span>wz</span><strong id="joystickWz">0.00</strong></div></div>
+          <div class="joystick-rotate"><button id="joystickRotateLeft" class="btn small" type="button">↺ 左转</button><button id="joystickRotateRight" class="btn small" type="button">右转 ↻</button></div>
+          <button id="btnJoystickStop" class="btn btn-danger full" type="button">停止底盘</button>
+        </section>
+        <section class="console-section robot-scene-settings">
+          <div class="section-head"><h2>场景显示设置</h2><button id="btnReloadStaticMap" class="btn small" type="button">重载地图</button></div>
+          <div class="scene-visibility-grid">
+            <label class="check-row"><input id="visRobotModel" type="checkbox" checked /> 机器人模型</label>
+            <label class="check-row"><input id="visGroundGrid" type="checkbox" checked /> 参考网格</label>
+            <label class="check-row"><input id="visStaticMap" type="checkbox" checked /> 静态地图点云</label>
+            <label class="check-row"><input id="visLiveLidar" type="checkbox" checked /> 实时雷达点云</label>
+            <label class="check-row"><input id="visMapFrame" type="checkbox" checked /> map 坐标系</label>
+            <label class="check-row"><input id="visBaseFrame" type="checkbox" checked /> base_link 坐标系</label>
+          </div>
+          <p class="field-caption">场景内实时信息</p>
+          <div class="scene-visibility-grid">
+            <label class="check-row"><input id="visPowerStatus" type="checkbox" /> 基础电源状态</label>
+            <label class="check-row"><input id="visRobotPose" type="checkbox" /> 底盘位姿</label>
+            <label class="check-row"><input id="visJointLeg" type="checkbox" /> leg 关节角</label>
+            <label class="check-row"><input id="visJointHead" type="checkbox" /> head 关节角</label>
+            <label class="check-row"><input id="visJointLeftArm" type="checkbox" /> left_arm 关节角</label>
+            <label class="check-row"><input id="visJointRightArm" type="checkbox" /> right_arm 关节角</label>
+          </div>
+          <div class="field"><label>机器人模型显示</label><select id="sharedRobotDisplayMode"><option value="visual">精细视觉模型</option><option value="collision">碰撞简化模型</option></select></div>
+          <div class="field"><label>静态地图点大小</label><input id="sharedStaticPointSize" type="range" min="1" max="12" step="0.5" value="2" /><span id="sharedStaticPointSizeValue">2 px</span></div>
+          <div class="field"><label>实时雷达点大小</label><input id="sharedLidarPointSize" type="range" min="1" max="12" step="0.5" value="3" /><span id="sharedLidarPointSizeValue">3 px</span></div>
+          <p id="lidarFrameStatus" class="inline-status">等待实时雷达数据</p>
+        </section>
+        <section class="console-section scene-data-settings">
+          <h2>场景资产与点云设置</h2>
+          <h3>本地场景资产</h3>
+          <p class="inline-status">本地文件只覆盖当前浏览器的共享场景，不上传也不改写服务端资产。</p>
+          <div class="local-asset-actions"><label class="btn small">加载 PCD<input id="robotLocalPcdFile" type="file" accept=".pcd" hidden /></label><button id="btnRobotRestoreStaticMap" class="btn small" type="button">恢复静态地图</button></div>
+          <div class="local-asset-actions"><label class="btn small">加载 URDF<input id="robotLocalUrdfFile" type="file" accept=".urdf,.xml" hidden /></label><button id="btnRobotRestoreModel" class="btn small" type="button">恢复默认模型</button></div>
+          <p id="robotLocalAssetStatus" class="inline-status">使用服务端静态地图和型号默认 URDF</p>
+          <h3>静态地图裁剪</h3>
+          <label class="check-row"><input id="staticCropEnabled" type="checkbox" /> 以机器人中心裁剪 XYZ</label>
+          <div class="cloud-crop-grid">
+            <label>X 半范围 (m)<input id="staticCropX" type="number" min="0.1" step="0.1" value="10" /></label>
+            <label>Y 半范围 (m)<input id="staticCropY" type="number" min="0.1" step="0.1" value="10" /></label>
+            <label>Z 半范围 (m)<input id="staticCropZ" type="number" min="0.1" step="0.1" value="3" /></label>
+          </div>
+          <h3>实时雷达显示</h3>
+          <div class="field"><label>最大传输/显示点数（每帧上限 15000）</label><input id="lidarMaxPoints" type="number" min="1000" max="15000" step="1000" value="8000" /></div>
+          <label class="check-row" title="雷达点先转换到 map，再以机器人当前位置为中心裁剪。"><input id="lidarCropEnabled" type="checkbox" /> 以机器人中心裁剪 XYZ</label>
+          <div class="cloud-crop-grid">
+            <label>X 半范围 (m)<input id="lidarCropX" type="number" min="0.1" step="0.1" value="5" /></label>
+            <label>Y 半范围 (m)<input id="lidarCropY" type="number" min="0.1" step="0.1" value="5" /></label>
+            <label>Z 半范围 (m)<input id="lidarCropZ" type="number" min="0.1" step="0.1" value="2" /></label>
+          </div>
+        </section>
+      </div>
+
+      <div class="workspace-panel" data-panel="motion">
+        <header><span>MOTION</span><h1>运动调试</h1></header>
+        <div class="workspace-primary-settings motion-simple-only" aria-label="Motion 常用设置">
+          <div class="field"><label>运动链</label><select id="motionChain"><option value="left_arm">left_arm</option><option value="right_arm">right_arm</option></select></div>
+          <p class="inline-status">末端偏移和目标规划共用当前运动链。</p>
+        </div>
+        <section class="console-section motion-simple-only">
+          <h2>末端偏移</h2>
+          <div class="offset-pad">
+            <div class="offset-row"><span>X</span><button type="button" data-offset="dx" data-value="1" aria-label="X 正向" aria-pressed="false">+</button><button type="button" data-offset="dx" data-value="-1" aria-label="X 负向" aria-pressed="false">−</button></div>
+            <div class="offset-row"><span>Y</span><button type="button" data-offset="dy" data-value="1" aria-label="Y 正向" aria-pressed="false">+</button><button type="button" data-offset="dy" data-value="-1" aria-label="Y 负向" aria-pressed="false">−</button></div>
+            <div class="offset-row"><span>Z</span><button type="button" data-offset="dz" data-value="1" aria-label="Z 正向" aria-pressed="false">+</button><button type="button" data-offset="dz" data-value="-1" aria-label="Z 负向" aria-pressed="false">−</button></div>
+            <div class="offset-row"><span>Roll</span><button type="button" data-offset="roll" data-value="1" aria-label="Roll 正向" aria-pressed="false">+</button><button type="button" data-offset="roll" data-value="-1" aria-label="Roll 负向" aria-pressed="false">−</button></div>
+            <div class="offset-row"><span>Pitch</span><button type="button" data-offset="pitch" data-value="1" aria-label="Pitch 正向" aria-pressed="false">+</button><button type="button" data-offset="pitch" data-value="-1" aria-label="Pitch 负向" aria-pressed="false">−</button></div>
+            <div class="offset-row"><span>Yaw</span><button type="button" data-offset="yaw" data-value="1" aria-label="Yaw 正向" aria-pressed="false">+</button><button type="button" data-offset="yaw" data-value="-1" aria-label="Yaw 负向" aria-pressed="false">−</button></div>
+          </div>
+          <button id="btnMotionApplyOffset" class="btn btn-accent full offset-apply" type="button" disabled>按住下发组合偏移</button>
+          <p class="inline-status">先选择一个或多个偏移方向，再按住下发按钮持续调整；松开立即停止。再次点击已选方向可取消。</p>
+        </section>
+        <section class="console-section motion-simple-only">
+          <h2>目标规划</h2>
+          <p class="inline-status">目标位姿固定使用 base_link 坐标系。</p>
+          <div class="coord-grid">
+            <label>X<input id="motionX" type="number" value="0.45" step="0.01" /></label>
+            <label>Y<input id="motionY" type="number" value="0.20" step="0.01" /></label>
+            <label>Z<input id="motionZ" type="number" value="0.85" step="0.01" /></label>
+          </div>
+          <div class="quat-grid">
+            <label>qx<input id="motionQx" type="number" value="0" step="0.01" /></label><label>qy<input id="motionQy" type="number" value="0" step="0.01" /></label><label>qz<input id="motionQz" type="number" value="0" step="0.01" /></label><label>qw<input id="motionQw" type="number" value="1" step="0.01" /></label>
+          </div>
+          <output id="motionTargetSummary" class="target-readout">[0.45, 0.20, 0.85]</output>
+          <div class="motion-actions"><button id="btnMotionSyncPose" class="btn small" type="button">同步当前位姿</button><button id="btnMotionPreviewPose" class="btn small" type="button">更新目标预览</button></div>
+          <label class="check-row"><input id="motionCollisionCheck" type="checkbox" checked /> 启用碰撞检查</label>
+          <label class="check-row"><input id="motionVisualizeTrajectory" type="checkbox" checked /> 可视化规划轨迹</label>
+          <div class="field"><label>规划超时 (s)</label><input id="motionTimeout" type="number" min="1" max="120" value="20" step="1" /></div>
+          <button id="btnPlanPreview" class="btn btn-accent full" type="button">生成规划</button>
+          <div class="motion-actions"><button id="btnPlayMotionPlan" class="btn small" type="button" disabled>播放预览</button><button id="btnReplayMotionPlan" class="btn small" type="button" disabled>重播</button><button id="btnRestoreMotionPlan" class="btn small" type="button" disabled>还原姿态</button></div>
+          <label id="motionPlaybackTimeline" class="playback-timeline" hidden><span>轨迹帧</span><input id="motionPlaybackScrubber" type="range" min="0" max="0" value="0" step="1" aria-label="轨迹帧" /><output id="motionPlaybackValue">0 / 0</output></label>
+          <label class="check-row motion-execute-toggle"><input id="motionExecuteEnabled" type="checkbox" /> 允许将规划同步到机器人</label>
+          <div class="motion-execute-grid"><label>速度 rad/s<input id="motionSpeed" type="number" min="0.01" max="0.3" value="0.15" step="0.01" /></label><label>起点容差 rad<input id="motionStartTolerance" type="number" min="0.01" max="0.2" value="0.05" step="0.01" /></label></div>
+          <button id="btnExecuteMotionPlan" class="btn btn-danger full" type="button" disabled>同步当前规划到机器人</button>
+          <div class="section-heading"><span>规划结果</span><span id="motionTrajectoryInfo" class="result-state neutral">等待规划</span></div>
+          <output id="motionTrajectoryDetail" class="trajectory-detail">点击“生成规划”查看本次结果</output>
+          <div id="motionPlaybackProgress" class="playback-progress" hidden><span>准备播放</span><progress max="1" value="0"></progress></div>
+          <pre id="motionStatus" class="compact-output">等待规划</pre>
+        </section>
+        <section class="console-section motion-advanced-only">
+          <h2>场景碰撞体编辑</h2>
+          <label class="check-row"><input id="showMotionObstacles" type="checkbox" checked /> 显示碰撞体</label>
+          <p class="inline-status">可先在点云中选点自动拟合，也可直接填写参数生成预览；预览不会写入 Motion。</p>
+          <div class="motion-actions"><button id="btnSharedMotionPickPoints" class="btn small" type="button">开始多点选取</button><button id="btnSharedMotionClearPoints" class="btn small" type="button">清除选点</button></div>
+          <p id="sharedMotionPickedStatus" class="inline-status">未选择点云点</p>
+          <div class="motion-execute-grid"><label>名称<input id="sharedMotionObstacleId" value="box_1" /></label><label>类型<select id="sharedMotionObstacleType"><option value="box">长方体</option><option value="sphere">球体</option><option value="cylinder">圆柱体</option></select></label></div>
+          <p class="field-caption">中心位置（map，m）</p>
+          <div class="coord-grid"><label>中心 X<input id="sharedMotionObstacleX" type="number" value="0.5" step="0.01" /></label><label>中心 Y<input id="sharedMotionObstacleY" type="number" value="0" step="0.01" /></label><label>中心 Z<input id="sharedMotionObstacleZ" type="number" value="0.5" step="0.01" /></label></div>
+          <p class="field-caption">尺寸（m）</p>
+          <div id="sharedMotionSizeGrid" class="coord-grid shape-size-grid" data-shape="box"><label id="sharedMotionScaleFieldX"><span id="sharedMotionScaleLabelX">X 尺寸</span><input id="sharedMotionObstacleSX" type="number" value="0.4" min="0.001" step="0.01" /></label><label id="sharedMotionScaleFieldY"><span id="sharedMotionScaleLabelY">Y 尺寸</span><input id="sharedMotionObstacleSY" type="number" value="0.4" min="0" step="0.01" /></label><label id="sharedMotionScaleFieldZ"><span id="sharedMotionScaleLabelZ">Z 尺寸</span><input id="sharedMotionObstacleSZ" type="number" value="0.8" min="0" step="0.01" /></label></div>
+          <button id="btnSharedMotionPreviewObstacle" class="btn small full" type="button">生成 / 更新碰撞体预览</button>
+          <p id="sharedMotionDraftStatus" class="inline-status">当前没有编辑中的碰撞体</p><div id="sharedMotionObstacleList" class="object-list"></div>
+          <button id="btnSharedMotionExitEdit" class="btn small full" type="button">退出场景编辑</button>
+          <button id="btnSharedMotionLoadCandidate" class="btn btn-accent full" type="button">加载选中候选到 Motion</button>
+          <h3>Motion 服务碰撞体 <span id="motionServiceObstacleCount">0</span></h3>
+          <div class="motion-actions"><button id="btnSharedMotionRefreshService" class="btn small" type="button">刷新服务端碰撞体</button><button id="btnSharedMotionRemoveService" class="btn small" type="button">删除选中服务端碰撞体</button></div><div id="sharedMotionServiceObstacleList" class="object-list"></div>
+        </section>
+      </div>
+
+      <div class="workspace-panel" data-panel="navigation">
+        <header><span>NAVIGATION</span><h1>导航任务</h1></header>
+        <div class="workspace-primary-settings navigation-path-settings" aria-label="规划路径显示设置">
+          <div class="field"><label for="navigationPathTask">导航任务</label><select id="navigationPathTask"><option value="">当前任务（自动跟随）</option></select></div>
+          <label class="check-row"><input id="visNavigationPath" type="checkbox" checked /> 显示所选任务的 SDK 规划路径</label>
+          <div class="field"><label>路径线宽</label><input id="navigationPathWidth" type="range" min="1" max="16" step="0.5" value="4" /><span id="navigationPathWidthValue">4 px</span></div>
+          <p id="navigationPathHint" class="inline-status">等待导航任务；路径将在规划器发布后显示。</p>
+        </div>
+        <section class="console-section nav-advanced-only">
+          <h2>目标位姿</h2>
+          <div class="coord-grid">
+            <label>X<input id="navX" type="number" value="0" step="0.1" /></label>
+            <label>Y<input id="navY" type="number" value="0" step="0.1" /></label>
+            <label>Yaw<input id="navYaw" type="number" value="0" step="0.1" /></label>
+          </div>
+          <label class="check-row"><input id="navCollisionCheck" type="checkbox" checked /> 启用碰撞检查</label>
+          <div class="motion-execute-grid"><label>超时 (s)<input id="navTimeout" type="number" min="1" max="300" value="30" /></label></div>
+          <div class="coord-grid"><label>最大 Vx<input id="navMaxVx" type="number" min="0.01" max="2" step="0.05" value="0.5" /></label><label>最大 Vy<input id="navMaxVy" type="number" min="0.01" max="2" step="0.05" value="0.5" /></label><label>最大 Vyaw<input id="navMaxVyaw" type="number" min="0.01" max="2" step="0.05" value="0.5" /></label></div>
+          <label class="check-row"><input id="navOmniPlan" type="checkbox" /> 全向规划</label>
+          <div class="navigation-primary-actions">
+            <button id="btnNavPickGoal" class="btn nav-action" type="button" aria-pressed="false">◎ 在场景中设置目标</button>
+            <button id="btnNavCheckReachability" class="btn nav-action" type="button">◇ 检查路径可达性</button>
+          </div>
+          <button id="btnNavigate" class="btn btn-accent nav-submit full" type="button">下发导航目标</button>
+        </section>
+        <section class="console-section nav-advanced-only">
+          <h2>多点导航</h2>
+          <div class="field"><label>多点模式</label><select id="navMultiPointMode"><option value="navigate_through_waypoints">途经点：依次到达</option><option value="navigate_along_trajectory">轨迹：连续跟随</option></select></div>
+          <p id="navMultiPointModeHint" class="inline-status">机器人依次到达每个途经点。</p>
+          <div id="navTrajectoryOptions" class="field" hidden><label>轨迹速度比例</label><input id="navTrajectorySpeedRatio" type="number" min="0.01" max="1" step="0.05" value="1" /></div>
+          <p class="inline-status">开始后在场景中依次点击并拖动朝向，至少选择两个导航点。</p>
+          <div class="navigation-primary-actions">
+            <button id="btnNavStartWaypoints" class="btn nav-action" type="button" aria-pressed="false">＋ 开始依次选点</button>
+            <button id="btnNavUndoWaypoint" class="btn nav-action" type="button" disabled>↶ 撤销上一点</button>
+          </div>
+          <div class="navigation-route-actions">
+            <button id="btnNavClearWaypoints" class="btn small" type="button" disabled>清空</button>
+            <button id="btnNavSubmitWaypoints" class="btn btn-accent" type="button" disabled>下发 0 个导航点</button>
+          </div>
+          <ol id="navWaypointList" class="navigation-waypoint-list"><li>尚未选择导航点</li></ol>
+        </section>
+        <section class="console-section">
+          <h2>任务状态</h2>
+          <pre id="navigationCommandResult" class="compact-output">等待导航操作</pre>
+          <pre id="navigationStatus" class="compact-output">等待状态</pre>
+        </section>
+      </div>
+    </aside>
+    <button id="btnTogglePanel" class="drawer-toggle panel-toggle" type="button" aria-controls="contextPanel" aria-expanded="true">收起详情</button>
+  </div>
+
+  <script type="importmap">
+  {"imports":{"three":"/frontend/scene/vendor/three/three.module.js","three/addons/":"/frontend/scene/vendor/three/"}}
+  </script>
+  <script src="/frontend/pages/console-bootstrap.js?v=20260912-1"></script>
+  <script type="module" src="/frontend/pages/console.js?v=20260913-1"></script>
+  <script type="module" src="/frontend/pages/recording-bar-bootstrap.js"></script>
+</body>
+</html>

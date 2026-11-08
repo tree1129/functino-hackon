@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Galbot 核心控制台</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #0b0e13; color: #dbe3ee; font: 14px/1.5 "Segoe UI", "Microsoft YaHei", sans-serif; }
+  #gate[hidden], #app[hidden] { display: none !important; }
+  #gate { position: fixed; inset: 0; display: grid; place-items: center; background: #0b0e13; z-index: 20; }
+  #gate .card { width: min(420px, 90vw); background: #141a23; border: 1px solid #2a3442; border-radius: 14px; padding: 28px; }
+  #gate h1 { margin: 0 0 8px; font-size: 20px; }
+  #gate p { margin: 0 0 18px; color: #8b98a9; }
+  #gate input { width: 100%; padding: 12px 14px; margin-bottom: 12px; background: #0f141b; border: 1px solid #2a3442; border-radius: 8px; color: #fff; font-size: 18px; letter-spacing: 2px; text-transform: uppercase; }
+  #gate button { width: 100%; padding: 12px; background: #3b82f6; border: 0; border-radius: 8px; color: #fff; font-size: 15px; cursor: pointer; }
+  #gate .err { color: #f87171; min-height: 20px; margin-top: 10px; font-size: 13px; }
+  #app { min-height: 100vh; display: flex; flex-direction: column; }
+  header.top { display: flex; align-items: center; gap: 12px; padding: 12px 18px; background: #111720; border-bottom: 1px solid #222c39; position: sticky; top: 0; z-index: 10; }
+  header.top .brand { font-weight: 700; letter-spacing: 1px; }
+  header.top .brand small { display: block; color: #7c8a9c; font-weight: 400; letter-spacing: 0; font-size: 11px; }
+  .spacer { flex: 1; }
+  .pill { padding: 4px 10px; border-radius: 999px; background: #1b2531; color: #8b98a9; font-size: 12px; }
+  .pill.ok { color: #4ade80; }
+  .pill.bad { color: #f87171; }
+  button, .linkbtn { padding: 7px 12px; background: #1b2531; color: #dbe3ee; border: 1px solid #2a3442; border-radius: 8px; cursor: pointer; text-decoration: none; font-size: 13px; }
+  button:hover, .linkbtn:hover { background: #24303e; }
+  button.danger { background: #7f1d1d; border-color: #b91c1c; color: #fff; }
+  button.action { background: #1e3a5f; border-color: #2f5f9e; }
+  .banner { margin: 10px 18px 0; padding: 10px 14px; border-radius: 8px; background: #1c2330; border: 1px solid #2a3442; color: #9fb0c6; font-size: 13px; }
+  .banner strong { color: #fbbf24; }
+  main { display: grid; grid-template-columns: repeat(12, 1fr); gap: 12px; padding: 12px 18px 24px; }
+  .card { background: #111720; border: 1px solid #222c39; border-radius: 12px; padding: 14px; min-width: 0; }
+  .card h2 { margin: 0 0 10px; font-size: 13px; letter-spacing: 1px; color: #9fb0c6; text-transform: uppercase; }
+  .card h2 span { color: #5f6c7d; font-weight: 400; text-transform: none; letter-spacing: 0; }
+  .span4 { grid-column: span 4; } .span6 { grid-column: span 6; } .span8 { grid-column: span 8; } .span12 { grid-column: span 12; }
+  .kv { display: grid; grid-template-columns: 110px 1fr; gap: 4px 10px; font-size: 13px; }
+  .kv span { color: #7c8a9c; } .kv b { font-weight: 500; word-break: break-all; }
+  .joints { display: grid; gap: 4px; margin-top: 8px; font-family: Consolas, monospace; font-size: 12px; color: #9fb0c6; }
+  .joints div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .statuslist { display: grid; gap: 6px; }
+  .statusrow { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #f87171; flex: none; }
+  .dot.ok { background: #4ade80; } .dot.warn { background: #fbbf24; }
+  .statusrow .name { flex: 1; color: #9fb0c6; }
+  .statusrow .value { color: #dbe3ee; font-family: Consolas, monospace; font-size: 12px; }
+  .filelist { display: grid; gap: 4px; max-height: 220px; overflow: auto; font-size: 12px; }
+  .filelist div { display: flex; gap: 8px; color: #9fb0c6; }
+  .filelist small { color: #5f6c7d; margin-left: auto; }
+  .actions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+  .action { text-align: left; }
+  .action b { display: block; font-size: 13px; margin-bottom: 2px; }
+  .action small { color: #7c8a9c; font-size: 11px; }
+  textarea { width: 100%; min-height: 130px; background: #0f141b; border: 1px solid #2a3442; border-radius: 8px; color: #dbe3ee; padding: 10px; font-family: Consolas, monospace; font-size: 12px; resize: vertical; }
+  .log { margin-top: 10px; background: #0a0d12; border: 1px solid #1c2531; border-radius: 8px; padding: 10px; max-height: 240px; overflow: auto; font-family: Consolas, monospace; font-size: 12px; color: #9fb0c6; white-space: pre-wrap; }
+  .joint-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 10px; font-size: 12px; color: #9fb0c6; }
+  .joint-toolbar label { display: flex; align-items: center; gap: 6px; }
+  .joint-toolbar input { width: 92px; padding: 6px 8px; background: #0f141b; border: 1px solid #2a3442; border-radius: 6px; color: #dbe3ee; }
+  .joint-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 10px; }
+  .joint-group { background: #0f141b; border: 1px solid #1c2531; border-radius: 8px; padding: 8px; }
+  .joint-group-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; font-size: 12px; color: #9fb0c6; }
+  .joint-group-head button { padding: 4px 8px; font-size: 11px; }
+  .joint-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(86px, 1fr)); gap: 6px; }
+  .joint-inputs label { display: flex; flex-direction: column; gap: 2px; font-size: 10px; color: #5f6c7d; }
+  .joint-control { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .joint-name { font-size: 10px; color: #5f6c7d; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .joint-slider { width: 100%; height: 24px; margin: 0; accent-color: #3b82f6; }
+  .joint-number { width: 100%; padding: 3px 5px; background: #0a0d12; border: 1px solid #222c39; border-radius: 4px; color: #dbe3ee; font-size: 11px; }
+  @media (max-width: 760px) {
+    header.top { flex-wrap: wrap; gap: 6px; }
+    main { padding: 8px; gap: 8px; }
+    .joint-groups { grid-template-columns: 1fr; }
+    .joint-inputs { grid-template-columns: 1fr 1fr; }
+    .joint-group-head button { padding: 6px 10px; }
+    .joint-toolbar input { width: 76px; }
+    .actions-grid { grid-template-columns: 1fr 1fr; }
+    textarea { min-height: 100px; }
+  }
+  .joint-inputs input { width: 100%; padding: 4px 6px; background: #0a0d12; border: 1px solid #222c39; border-radius: 4px; color: #dbe3ee; font-size: 11px; }
+  iframe { width: 100%; border: 0; border-radius: 8px; background: #0a0d12; }
+  @media (max-width: 1100px) { .span4, .span6, .span8 { grid-column: span 12; } }
+</style>
+</head>
+<body>
+<div id="gate">
+  <form class="card" id="gateForm">
+    <h1>Galbot 核心控制台</h1>
+    <p>请输入控制台本次启动的访问码。</p>
+    <input id="code" autocomplete="one-time-code" placeholder="例如 FF3D5BGW" required />
+    <button type="submit">进入核心控制台</button>
+    <div class="err" id="gateErr"></div>
+  </form>
+</div>
+
+<div id="app" hidden>
+  <header class="top">
+    <div class="brand">GALBOT CORE<small>机器人 · 相机 · 动作 · 数采 · 服务</small></div>
+    <span class="pill" id="connPill">连接中…</span>
+    <span class="pill" id="modePill">--</span>
+    <span class="pill" id="livePill">--</span>
+    <div class="spacer"></div>
+    <button id="btnRefresh" type="button">刷新</button>
+    <button id="btnEstop" class="danger" type="button">急停</button>
+    <a class="linkbtn" href="/" target="_blank">3D 控制台</a>
+    <a class="linkbtn" href="/frontend/camera.html" target="_blank">相机全屏</a>
+  </header>
+  <div class="banner"><strong>安全提示：</strong>执行任何动作前，请确保急停按钮可及、机器人周围 1.5 米内无人、无遮挡。动作默认低速执行，服务端会校验显式确认。</div>
+
+  <main>
+    <section class="card span4">
+      <h2>机器人 <span id="robotSub"></span></h2>
+      <div class="kv" id="robotKv"></div>
+      <div class="joints" id="jointList"></div>
+    </section>
+
+    <section class="card span4">
+      <h2>服务与链路</h2>
+      <div class="statuslist" id="serviceList"></div>
+    </section>
+
+    <section class="card span4">
+      <h2>数采存储 <span id="dataSub"></span></h2>
+      <div class="kv" id="dataKv"></div>
+      <div class="filelist" id="fileList"></div>
+    </section>
+
+    <section class="card span8">
+      <h2>动作编排 <span>点击执行；服务端要求 confirmed=true</span></h2>
+      <div class="actions-grid" id="actionButtons"></div>
+      <div class="log" id="actionLog">等待操作…</div>
+    </section>
+
+    <section class="card span4">
+      <h2>自定义动作序列</h2>
+      <textarea id="sequenceText">[
+  {"type":"joint","group":"head","positions":[0,0.15],"speed":0.2,"timeout":10},
+  {"type":"wait","seconds":0.4},
+  {"type":"joint","group":"head","positions":[0,0],"speed":0.2,"timeout":10}
+]</textarea>
+      <button id="btnRunSequence" class="action" type="button" style="margin-top:8px">执行序列</button>
+      <div class="log" id="sequenceLog">仅支持 joint / gripper / wait / stop / shake；关节限速 0.01–0.5 rad/s。</div>
+    </section>
+
+    <section class="card span12">
+      <h2>全关节控制 <span>21 个本体关节 + 左右夹爪；PVT 控制器直接下发</span></h2>
+      <div class="joint-toolbar">
+        <label>速度 rad/s <input id="jointSpeed" type="number" min="0.01" max="0.5" step="0.01" value="0.10"></label>
+        <label>超时 s <input id="jointTimeout" type="number" min="1" max="60" step="1" value="10"></label>
+        <button id="btnSyncJoints" type="button">同步当前值</button>
+        <button id="btnSendAllJoints" class="danger" type="button">发送全部组</button>
+      </div>
+      <div id="jointControlGroups" class="joint-groups"></div>
+      <div class="joint-toolbar" style="margin-top:10px">
+        <label>左夹爪宽度 m <input id="leftGripperWidth" type="number" min="0" max="0.12" step="0.005" value="0.05"></label>
+        <button data-gripper="left" type="button">设置左夹爪</button>
+        <label>右夹爪宽度 m <input id="rightGripperWidth" type="number" min="0" max="0.12" step="0.005" value="0.05"></label>
+        <button data-gripper="right" type="button">设置右夹爪</button>
+      </div>
+      <div class="log" id="jointLog">等待操作…</div>
+    </section>
+
+    <section class="card span6">
+      <h2>相机监视 <span>10 路实时画面</span></h2>
+      <iframe id="cameraFrame" style="height:520px" loading="lazy" title="相机监视"></iframe>
+    </section>
+
+    <section class="card span6">
+      <h2>3D / LiDAR 控制台 <span>加载会启动 Three.js 场景</span></h2>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button id="btnLoad3d" type="button">加载 3D 控制台</button>
+        <a class="linkbtn" href="/" target="_blank">新窗口打开</a>
+      </div>
+      <iframe id="consoleFrame" style="height:520px" title="3D 控制台"></iframe>
+    </section>
+  </main>
+</div>
+
+<script>
+const gate = document.getElementById('gate');
+const app = document.getElementById('app');
+const gateErr = document.getElementById('gateErr');
+const connPill = document.getElementById('connPill');
+const modePill = document.getElementById('modePill');
+const livePill = document.getElementById('livePill');
+let cameraLoaded = false;
+
+const JOINT_GROUPS = {
+  leg: ['leg_joint1','leg_joint2','leg_joint3','leg_joint4','leg_joint5'],
+  head: ['head_joint1','head_joint2'],
+  left_arm: ['left_arm_joint1','left_arm_joint2','left_arm_joint3','left_arm_joint4','left_arm_joint5','left_arm_joint6','left_arm_joint7'],
+  right_arm: ['right_arm_joint1','right_arm_joint2','right_arm_joint3','right_arm_joint4','right_arm_joint5','right_arm_joint6','right_arm_joint7']
+};
+let latestGroups = {};
+let jointControlsBuilt = false;
+let gripperInitialized = false;
+
+async function isAuthed() {
+  try { const r = await fetch('/api/auth/status', {cache:'no-store'}); return (await r.json()).authenticated === true; } catch { return false; }
+}
+async function login(code) {
+  const r = await fetch('/api/auth/login', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({code})});
+  return r.ok;
+}
+async function boot() {
+  if (!(await isAuthed())) { gate.hidden = false; app.hidden = true; return; }
+  gate.hidden = true; app.hidden = false;
+  if (!cameraLoaded) { cameraLoaded = true; document.getElementById('cameraFrame').src = '/frontend/camera.html'; }
+  loadStatus(); loadActions();
+}
+function fmtBytes(n) {
+  if (!n) return '0 B';
+  const units = ['B','KB','MB','GB','TB']; let i = 0; let v = n;
+  while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
+  return v.toFixed(1) + ' ' + units[i];
+}
+function esc(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function buildJointControls(groups) {
+  const container = document.getElementById('jointControlGroups');
+  container.innerHTML = Object.entries(JOINT_GROUPS).map(([group, names]) => `
+    <div class="joint-group" data-group="${group}">
+      <div class="joint-group-head"><strong>${group}</strong><button type="button" data-send-group="${group}">发送该组</button></div>
+      <div class="joint-inputs">${names.map(name => `
+        <div class="joint-control">
+          <span class="joint-name">${name}</span>
+          <input type="range" class="joint-slider" min="-3.14" max="3.14" step="0.01" data-joint-slider="${name}">
+          <input type="number" class="joint-number" step="0.01" data-joint="${name}" data-group="${group}">
+        </div>`).join('')}</div>
+    </div>`).join('');
+  container.querySelectorAll('.joint-control').forEach(control => {
+    const slider = control.querySelector('.joint-slider');
+    const number = control.querySelector('.joint-number');
+    if (!slider || !number) return;
+    slider.addEventListener('input', () => { number.value = Number(slider.value).toFixed(3); });
+    number.addEventListener('input', () => { if (Number.isFinite(Number(number.value))) slider.value = number.value; });
+  });
+  container.querySelectorAll('[data-send-group]').forEach(button => button.addEventListener('click', () => sendJointGroup(button.dataset.sendGroup)));
+}
+
+function syncJointInputs(groups) {
+  for (const [group, names] of Object.entries(JOINT_GROUPS)) {
+    const values = groups[group] || [];
+    names.forEach((name, index) => {
+      const input = document.querySelector(`input[data-joint="${name}"]`);
+      const slider = document.querySelector(`input[data-joint-slider="${name}"]`);
+      if (input && values[index] != null) input.value = Number(values[index]).toFixed(3);
+      if (slider && values[index] != null) slider.value = Number(values[index]).toFixed(3);
+    });
+  }
+}
+
+function jointLog(text) { document.getElementById('jointLog').textContent = text; }
+
+async function postJointGroup(group) {
+  const names = JOINT_GROUPS[group];
+  if (!names) return {ok:false, error:'unknown group'};
+  const positions = names.map(name => {
+    const input = document.querySelector(`input[data-joint="${name}"]`);
+    return input ? Number(input.value) : NaN;
+  });
+  if (positions.some(value => !Number.isFinite(value))) return {ok:false, error:'invalid positions'};
+  const speed = Number(document.getElementById('jointSpeed').value);
+  const timeout = Number(document.getElementById('jointTimeout').value);
+  const response = await fetch('/api/commands/robot/set_joint_positions', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({positions, joint_names:names, max_speed:speed, timeout})});
+  const payload = await response.json();
+  return {status: response.status, payload};
+}
+
+async function sendJointGroup(group) {
+  if (!confirm(`确认发送 ${group} 关节指令？\n\n请确保急停可及、该组关节周围无人无遮挡。`)) return;
+  jointLog('执行中…');
+  try {
+    const result = await postJointGroup(group);
+    jointLog(JSON.stringify(result, null, 2));
+    loadStatus();
+  } catch (error) { jointLog('执行失败: ' + error); }
+}
+
+async function sendAllJoints() {
+  if (!confirm('确认发送全部 4 组关节指令？\n\n腿/腰也会运动，机器人高度会变化；请确保周围清空、有人保护、急停可及。')) return;
+  jointLog('执行中…');
+  const results = {};
+  for (const group of Object.keys(JOINT_GROUPS)) {
+    try { results[group] = await postJointGroup(group); } catch (error) { results[group] = {error:String(error)}; break; }
+  }
+  jointLog(JSON.stringify(results, null, 2));
+  loadStatus();
+}
+
+async function setGripper(side) {
+  const width = Number(document.getElementById(side + 'GripperWidth').value);
+  if (!confirm(`确认设置${side === 'left' ? '左' : '右'}夹爪宽度 ${width} m？`)) return;
+  jointLog('执行中…');
+  try {
+    const response = await fetch('/api/commands/robot/set_gripper_command', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({side, width, speed:0.05, effort:10})});
+    const payload = await response.json();
+    jointLog(JSON.stringify({status: response.status, payload}, null, 2));
+  } catch (error) { jointLog('执行失败: ' + error); }
+}
+
+async function loadStatus() {
+  try {
+    const r = await fetch('/api/core/status', {cache:'no-store'});
+    if (r.status === 401) { gate.hidden = false; app.hidden = true; return; }
+    const s = await r.json();
+    const sys = s.system || {}, mode = s.mode || {}, robot = s.robot || {}, sensors = robot.sensors || {};
+    const bms = sensors.bms || {};
+    connPill.textContent = s.live ? 'LIVE' : 'DRY-RUN';
+    connPill.className = 'pill ' + (s.live ? 'ok' : 'bad');
+    modePill.textContent = '模式 ' + (mode.current || mode.auto || '--');
+    livePill.textContent = 'SDK ' + (robot.available ? '已连接' : '未连接');
+    livePill.className = 'pill ' + (robot.available ? 'ok' : 'bad');
+    document.getElementById('robotSub').textContent = sys.SN ? sys.SN : '';
+    document.getElementById('robotKv').innerHTML =
+      `<span>SN</span><b>${esc(sys.SN)}</b>` +
+      `<span>型号 / 硬件</span><b>${esc(sys.ROBOT_SERIES)} / ${esc(sys.HARDWARE_VERSION)}</b>` +
+      `<span>GBS</span><b>${esc(sys.CUR_VERSION)}</b>` +
+      `<span>模式</span><b>${esc(mode.current)}</b>` +
+      `<span>电量</span><b>${bms.battery_level != null ? bms.battery_level + '%' : '--'}</b>` +
+      `<span>电压 / 电流</span><b>${bms.voltage != null ? bms.voltage.toFixed(1) + 'V' : '--'} / ${bms.current != null ? bms.current.toFixed(1) + 'A' : '--'}</b>` +
+      `<span>关节数</span><b>${robot.joint_count ?? '--'}</b>`;
+    const groups = robot.groups || {};
+    document.getElementById('jointList').innerHTML = Object.entries(groups).map(([g, values]) => `<div>${g}: ${(values || []).map(v => v == null ? '--' : Number(v).toFixed(2)).join(' ')}</div>`).join('');
+    latestGroups = groups;
+    if (!jointControlsBuilt) { buildJointControls(groups); jointControlsBuilt = true; syncJointInputs(groups); }
+    if (!gripperInitialized && sensors.grippers) {
+      const left = sensors.grippers.left, right = sensors.grippers.right;
+      if (left && left.width != null) document.getElementById('leftGripperWidth').value = Number(left.width).toFixed(3);
+      if (right && right.width != null) document.getElementById('rightGripperWidth').value = Number(right.width).toFixed(3);
+      gripperInitialized = true;
+    }
+
+    const svc = s.services || {};
+    const names = {
+      'galbot-console':'核心控制台','frpc':'frp 客户端','vps_20022':'VPS SSH 20022','vps_28080':'VPS 控制台 28080','vps_7000':'VPS frps 7000',
+      'left_arm_camera_capture':'左腕相机','right_arm_camera_capture':'右腕相机','front_head_camera_capture':'头部相机','surround_cameras_capture':'环视相机',
+      'swallows':'数采 swallows','teleoperation':'遥操作','data_backflow_service':'数据回传','galbot_daemon':'机器人守护','galbot_svc_hpu_comm':'HPU 通信'
+    };
+    document.getElementById('serviceList').innerHTML = Object.entries(names).map(([key, label]) => {
+      const value = svc[key]; const ok = value === true || value === 'active';
+      return `<div class="statusrow"><span class="dot ${ok ? 'ok' : ''}"></span><span class="name">${label}</span><span class="value">${esc(value ?? '--')}</span></div>`;
+    }).join('');
+
+    const data = s.data || {}, disk = s.disk || {};
+    document.getElementById('dataSub').textContent = data.count ? data.count + ' 个文件' : '暂无数据';
+    document.getElementById('dataKv').innerHTML =
+      `<span>目录</span><b>${esc(data.dir)}</b>` +
+      `<span>文件 / 大小</span><b>${data.count ?? 0} / ${fmtBytes(data.total_bytes)}</b>` +
+      `<span>磁盘可用</span><b>${fmtBytes(disk.free)}</b>`;
+    document.getElementById('fileList').innerHTML = (data.files || []).map(f => `<div><span>${esc(f.name)}</span><small>${fmtBytes(f.size)} · ${esc(f.mtime)}</small></div>`).join('') || '<div>暂无 MCAP 文件</div>';
+  } catch (e) {
+    connPill.textContent = '状态读取失败';
+    connPill.className = 'pill bad';
+  }
+}
+
+async function loadActions() {
+  try {
+    const r = await fetch('/api/core/actions', {cache:'no-store'});
+    const json = await r.json();
+    document.getElementById('actionButtons').innerHTML = (json.actions || []).map(a =>
+      `<button class="action" data-action="${esc(a.name)}"><b>${esc(a.label)}</b><small>${esc(a.description)}</small></button>`
+    ).join('');
+    document.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', () => runAction(button.dataset.action, button.textContent)));
+  } catch (e) {}
+}
+
+async function runAction(name, label) {
+  if (!confirm(`确认执行「${label || name}」？\n\n请确保急停按钮可及、机器人周围 1.5 米内无人无遮挡。`)) return;
+  const log = document.getElementById('actionLog');
+  log.textContent = '执行中…';
+  try {
+    const r = await fetch('/api/core/actions/' + encodeURIComponent(name), {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({confirmed:true})});
+    const json = await r.json();
+    log.textContent = JSON.stringify(json, null, 2);
+    loadStatus();
+  } catch (e) { log.textContent = '执行失败: ' + e; }
+}
+
+document.getElementById('btnRunSequence').addEventListener('click', async () => {
+  if (!confirm('确认执行自定义动作序列？\n\n请确保急停可及、周围无人。')) return;
+  const log = document.getElementById('sequenceLog');
+  let steps;
+  try { steps = JSON.parse(document.getElementById('sequenceText').value); } catch (e) { log.textContent = 'JSON 解析失败: ' + e; return; }
+  log.textContent = '执行中…';
+  try {
+    const r = await fetch('/api/core/sequence', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({steps, confirmed:true})});
+    const json = await r.json();
+    log.textContent = JSON.stringify(json, null, 2);
+    loadStatus();
+  } catch (e) { log.textContent = '执行失败: ' + e; }
+});
+
+document.getElementById('btnEstop').addEventListener('click', async () => {
+  const log = document.getElementById('actionLog');
+  log.textContent = '正在发送急停…';
+  try {
+    const r = await fetch('/api/commands/robot/emergency_stop', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({})});
+    const json = await r.json();
+    log.textContent = JSON.stringify(json, null, 2);
+  } catch (e) { log.textContent = '急停请求失败: ' + e; }
+});
+
+document.getElementById('btnLoad3d').addEventListener('click', () => {
+  const frame = document.getElementById('consoleFrame');
+  if (!frame.src) frame.src = '/';
+});
+document.getElementById('btnRefresh').addEventListener('click', () => { loadStatus(); loadActions(); });
+document.getElementById('btnSyncJoints').addEventListener('click', () => syncJointInputs(latestGroups));
+document.getElementById('btnSendAllJoints').addEventListener('click', sendAllJoints);
+document.querySelectorAll('[data-gripper]').forEach(button => button.addEventListener('click', () => setGripper(button.dataset.gripper)));
+
+document.getElementById('gateForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  gateErr.textContent = '';
+  const ok = await login(document.getElementById('code').value.trim());
+  if (!ok) { gateErr.textContent = '访问码错误或服务已重启'; return; }
+  boot();
+});
+
+boot();
+setInterval(() => { if (!app.hidden) loadStatus(); }, 5000);
+</script>
+</body>
+</html>

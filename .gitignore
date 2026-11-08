@@ -1,0 +1,27 @@
+# macOS metadata
+.DS_Store
+._*
+
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Runtime output
+recordings/
+out/
+faces/
+*.rrd
+*.log
+
+# Local secrets and credentials
+.env
+.env.*
+*.pem
+*.key
+id_rsa*
+
+# Delivery archives
+*.zip
